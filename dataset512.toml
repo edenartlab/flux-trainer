@@ -6,7 +6,7 @@ caption_tag_dropout_rate = 0.0
 caption_extension = ".txt"
 
 [[datasets]]
-batch_size = 2
+batch_size = 4
 enable_bucket = true
 resolution = 512
 min_bucket_reso = 256
