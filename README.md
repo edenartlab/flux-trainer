@@ -1,7 +1,12 @@
 # flux-trainer
-Eden Flux LoRA trainer and full-finetuning.
+Flux LoRA trainer and full-finetuning.
 
-For now this is a utility wrapper around [kohya](https://github.com/kohya-ss/sd-scripts/tree/sd3)
+For now this is a utility wrapper around [kohya](https://github.com/kohya-ss/sd-scripts/tree/sd3) that deals with:
+- dataset downloading
+- automatic captioning
+- easily passing in training args
+- running inference on checkpoints with sample prompts
+- packaging and uploading outputs into a .tar file to upload
 
 ## Setup instructions:
 ```
