@@ -13,3 +13,8 @@ cd sd-scripts
 git checkout sd3
 pip install -r requirements.txt
 ```
+
+## Training instructions:
+1. Create a folder of training images
+2. adjust train_config.yaml
+3. run main.py (in the root of flux-trainer)
