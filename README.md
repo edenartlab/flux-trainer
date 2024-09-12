@@ -5,7 +5,8 @@ For now this is a utility wrapper around [kohya](https://github.com/kohya-ss/sd-
 - dataset downloading
 - automatic captioning
 - easily passing in training args
-- packaging and uploading output .tar files
+- running inference on checkpoints with sample prompts
+- packaging and uploading outputs into a .tar file to upload
 
 ## Setup instructions:
 ```
