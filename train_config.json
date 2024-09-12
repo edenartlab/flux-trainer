@@ -4,6 +4,6 @@
     "T5XXL_PATH": "/data/xander/Projects/cog/GitHub_repos/ComfyUI/models/clip/t5xxl_fp16.safetensors",
     "AE_PATH": "/data/xander/Projects/cog/GitHub_repos/ComfyUI/models/vae/ae.safetensors",
 
-    "DATASET_CONFIG": "dataset.toml",
+    "DATASET_CONFIG": "dataset512.toml",
     "EVAL_PROMPTS": "eval_prompts.txt"
 }
