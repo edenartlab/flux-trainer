@@ -6,8 +6,8 @@ For now this is a utility wrapper around [kohya](https://github.com/kohya-ss/sd-
 ## Setup instructions:
 ```
 git clone https://github.com/edenartlab/flux-trainer.git
-pip install -r requirements.txt
 cd flux-trainer
+pip install -r requirements.txt
 git clone https://github.com/kohya-ss/sd-scripts.git
 cd sd-scripts
 git checkout sd3
