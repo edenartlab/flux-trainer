@@ -1,0 +1,46 @@
+[general]
+# define common settings here
+flip_aug = false
+color_aug = false
+shuffle_caption = false
+caption_tag_dropout_rate = 0.0
+caption_extension = ".txt"
+
+[[datasets]]
+batch_size = 2
+enable_bucket = true
+resolution = 512
+min_bucket_reso = 256
+max_bucket_reso = 768
+bucket_reso_steps = 64
+
+  [[datasets.subsets]]
+  image_dir = "/data/xander/Projects/cog/xander_eden_stuff/clipxdata/clipx_dataset"
+  num_repeats = 1
+  caption_prefix = "a candid photo of a handsome young man with short, curly brown hair and a mustache." 
+
+[[datasets]]
+batch_size = 2
+enable_bucket = true
+resolution = 768
+min_bucket_reso = 512
+max_bucket_reso = 1024
+bucket_reso_steps = 64
+
+  [[datasets.subsets]]
+  image_dir = "/data/xander/Projects/cog/xander_eden_stuff/clipxdata/clipx_dataset"
+  num_repeats = 1
+  caption_prefix = "a candid photo of a handsome young man with short, curly brown hair and a mustache." 
+
+[[datasets]]
+batch_size = 1
+enable_bucket = true
+resolution = 1024
+min_bucket_reso = 768
+max_bucket_reso = 1280
+bucket_reso_steps = 64
+
+  [[datasets.subsets]]
+  image_dir = "/data/xander/Projects/cog/xander_eden_stuff/clipxdata/clipx_dataset"
+  num_repeats = 1
+  caption_prefix = "a candid photo of a handsome young man with short, curly brown hair and a mustache." 
