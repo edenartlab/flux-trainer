@@ -47,5 +47,6 @@ huggingface-cli download comfyanonymous/flux_text_encoders t5xxl_fp16.safetensor
 ### 3. Run a training job:
 1. Create a folder of training images
 2. make a copy of `template/train_config.json` with your training setup.
+3. Optionally adjust `template/eval_prompts.txt`
 3. run `python main.py --config /path/to/train_config.json`
 4. All the logs, samples and .safetensors files will appear under ./results
