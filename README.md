@@ -31,6 +31,6 @@ cd ..
 
 ### 3. Run a training job:
 1. Create a folder of training images
-2. adjust template/train_config.json or make a copy of it with your setup.
+2. make a copy of `template/train_config.json` with your training setup.
 3. run `python main.py --config /path/to/train_config.json`
 4. All the logs, samples and .safetensors files will appear under ./results
