@@ -39,8 +39,8 @@ mkdir models
 cd models
 huggingface-cli download black-forest-labs/FLUX.1-dev flux1-dev.safetensors --repo-type model
 huggingface-cli download https://huggingface.co/black-forest-labs/FLUX.1-dev/resolve/main/ae.safetensors --repo-type model
-huggingface-cli download https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/clip_l.safetensors
-huggingface-cli download https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp16.safetensors
+huggingface-cli download https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/clip_l.safetensors  --repo-type model
+huggingface-cli download https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp16.safetensors  --repo-type model
 ```
 
 ### 3. Run a training job:
