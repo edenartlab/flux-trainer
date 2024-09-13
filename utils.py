@@ -1,11 +1,96 @@
 import os
 import json
 import random
+import toml
+import subprocess
+import logging
+from typing import Dict, Any, List
 from tqdm import tqdm
+from datetime import datetime
 import torch
 import gc
 from PIL import Image
 import shutil
+
+from pathlib import Path
+def path_to_str(obj: Any) -> Any:
+    """Convert Path objects to strings."""
+    if isinstance(obj, Path):
+        return str(obj)
+    elif isinstance(obj, dict):
+        return {k: path_to_str(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [path_to_str(v) for v in obj]
+    return obj
+
+def construct_toml(config: Dict[str, Any]) -> Dict[str, Any]:
+    """Construct and update the TOML configuration file."""
+    try:
+        with open(config["dataset_toml"], 'r') as file:
+            toml_data = toml.load(file)
+
+        if 'datasets' in toml_data:
+            for dataset in toml_data['datasets']:
+                if 'subsets' in dataset:
+                    for subset in dataset['subsets']:
+                        subset['image_dir'] = config['dataset_path']
+        logging.info(f"All instances of 'image_dir' in dataset.toml updated to: {config['dataset_path']}")
+        
+        toml_data['general']['flip_aug'] = config["mode"] != "face"
+        if not toml_data['general']['flip_aug']:
+            logging.info("Disabling flip augmentation for face mode.")
+
+        toml_file_path = Path(config["output_dir"]) / "dataset.toml"
+        with open(toml_file_path, 'w') as file:
+            toml.dump(toml_data, file)
+        
+        config["dataset_config"] = str(toml_file_path)
+    except Exception as e:
+        logging.error(f"Error in construct_toml: {str(e)}")
+        raise
+
+    return config
+
+def construct_config(config_path: str) -> Dict[str, Any]:
+    """Construct and update the configuration dictionary."""
+    try:
+        with open(config_path, 'r') as f:
+            config = json.load(f)
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+        config["timestamp"] = timestamp
+        config["output_name"] = f"{Path(config['dataset_path']).name}_{timestamp}"
+        config["output_dir"] = str(Path("results") / config['output_name'])
+
+        Path(config["output_dir"]).mkdir(parents=True, exist_ok=True)
+        
+        # Convert all Path objects to strings before JSON serialization
+        serializable_config = path_to_str(config)
+        
+        with open(Path(config["output_dir"]) / "config.json", 'w') as f:
+            json.dump(serializable_config, f, indent=4)
+
+        return construct_toml(config)
+    except Exception as e:
+        logging.error(f"Error in construct_config: {str(e)}")
+        raise
+
+def run_job(cmd: List[str], config: Dict[str, Any]) -> None:
+    """Run the training job and log output."""
+    log_file = Path(config["output_dir"]) / f"training_log_{config['timestamp']}.txt"
+    try:
+        with open(log_file, 'w') as f:
+            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+            for line in process.stdout:
+                print(line, end='')
+                f.write(line)
+                f.flush()
+
+        if process.wait() != 0:
+            raise subprocess.CalledProcessError(process.returncode, cmd)
+    except Exception as e:
+        logging.error(f"Error in run_job: {str(e)}")
+        raise
 
 #workaround for unnecessary flash_attn requirement
 from unittest.mock import patch
@@ -94,16 +179,20 @@ def florence_caption_dataset(dataset_dir,
 
     return
 
-def prep_dataset(root_directory):
+def prep_dataset(root_directory, soft_clean = False):
     error_dir = os.path.join(os.path.dirname(root_directory), 'errors')
     os.makedirs(error_dir, exist_ok=True)
-    
+
     print("Preparing dataset folder {root_directory}...")
     total_imgs, resized = 0, 0
 
     for subdir, _, files in os.walk(root_directory):
         for file in files:
             file_path = os.path.join(subdir, file)
+
+            if soft_clean and file_path.lower().endswith(('.txt', '.npz')):
+                continue
+
             try:
                 # Try loading the file as an image and converting it to RGB
                 with Image.open(file_path) as img:
@@ -120,15 +209,19 @@ def prep_dataset(root_directory):
                     img.save(new_file_path, 'JPEG', quality=95)
                     total_imgs += 1
                 
-                # Delete the original file
-                os.remove(file_path)
+                # Delete the original file if it was different from the new one:
+                if new_file_path != file_path:
+                    os.remove(file_path)
+
             except Exception as e:
                 # If there was any error, move the file to the errors directory
-                print(f"Error processing {file_path}: {e}")
+                print(f"Error preparing img: {e}")
                 shutil.move(file_path, os.path.join(error_dir, file))
-                print(f"Moved {file} to {error_dir}")
 
     print(f"{total_imgs} imgs in {root_directory} converted to .jpg Resized {resized} images.")
+
+    files = os.listdir(root_directory)
+    print(files)
 
 
 if __name__ == "__main__":
