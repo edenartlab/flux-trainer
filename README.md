@@ -29,7 +29,8 @@ cd ..
 - [FLUX denoiser](https://huggingface.co/black-forest-labs/FLUX.1-dev/resolve/main/flux1-dev.safetensors) and [FLUX VAE](https://huggingface.co/black-forest-labs/FLUX.1-dev/resolve/main/ae.safetensors) from [here](https://huggingface.co/black-forest-labs/FLUX.1-dev/resolve/main)
 - [clip_l.safetensors](https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/clip_l.safetensors) and [T5_fp16.safetensors](https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp16.safetensors) from [here](https://huggingface.co/comfyanonymous/flux_text_encoders/tree/main)
 
-## Training instructions:
+### 3. Run a training job:
 1. Create a folder of training images
-2. adjust train_config.yaml
-3. run main.py (in the root of flux-trainer)
+2. adjust template/train_config.json or make a copy of it with your setup.
+3. run `python main.py --config /path/to/train_config.json`
+4. All the logs, samples and .safetensors files will appear under ./results
