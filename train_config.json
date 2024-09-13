@@ -1,7 +1,12 @@
 {
-    "DATASET_CONFIG": "dataset512.toml",
-    "EVAL_PROMPTS": "eval_prompts.txt",
-
+    "dataset_path": "/data/xander/Projects/cog/GitHub_repos/flux-trainer/test_imgs",
+    "mode": "style",
+    "caption_mode": "<CAPTION>",
+    "caption_prefix": "", 
+    "caption_suffix": "",
+    "dataset_toml": "dataset_template_512.toml",
+    "eval_prompts": "eval_prompts.txt",
+    
     "MODEL_PATH": "/data/xander/Projects/cog/GitHub_repos/ComfyUI/models/unet/flux1-dev.safetensors",
     "CLIP_L_PATH": "/data/xander/Projects/cog/GitHub_repos/ComfyUI/models/clip/clip_l.safetensors",
     "T5XXL_PATH": "/data/xander/Projects/cog/GitHub_repos/ComfyUI/models/clip/t5xxl_fp16.safetensors",

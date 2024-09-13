@@ -3,3 +3,6 @@ sd-scripts
 results
 models
 test
+__pycache__/
+errors
+test_imgs
