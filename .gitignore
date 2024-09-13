@@ -4,5 +4,5 @@ results
 models
 test
 __pycache__/
-errors
+error_dataset_files
 test_imgs

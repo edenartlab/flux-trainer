@@ -1,4 +1,4 @@
-a man walking down the street
-a massive nuclear explosion in the desert
-a painting of a beautiful woman by Vincent van Gogh
-a stunning artwork in the forest, masterpiece
+a man walking down the street --w 768 --h 768 --s 20 --d 0
+a massive nuclear explosion in the desert --w 768 --h 768 --s 20 --d 1
+a painting of a beautiful woman by Vincent van Gogh --w 768 --h 768 --s 20 --d 2
+a stunning artwork in the forest, masterpiece --w 768 --h 768 --s 20 --d 3

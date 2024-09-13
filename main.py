@@ -53,7 +53,7 @@ def construct_train_command(config: Dict[str, Any]) -> List[str]:
 
 def main():
     config = construct_config("train_config.json")
-    prep_dataset(config["dataset_path"])
+    prep_dataset(config["dataset_path"], hard_prep = False)
     florence_caption_dataset(config["dataset_path"], caption_mode=config["caption_mode"])
     cmd = construct_train_command(config)
     run_job(cmd, config)

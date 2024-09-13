@@ -179,8 +179,8 @@ def florence_caption_dataset(dataset_dir,
 
     return
 
-def prep_dataset(root_directory, soft_clean = False):
-    error_dir = os.path.join(os.path.dirname(root_directory), 'errors')
+def prep_dataset(root_directory, hard_prep = True):
+    error_dir = os.path.join(os.path.dirname(root_directory), 'error_dataset_files')
     os.makedirs(error_dir, exist_ok=True)
 
     print("Preparing dataset folder {root_directory}...")
@@ -190,7 +190,7 @@ def prep_dataset(root_directory, soft_clean = False):
         for file in files:
             file_path = os.path.join(subdir, file)
 
-            if soft_clean and file_path.lower().endswith(('.txt', '.npz')):
+            if (not hard_prep) and file_path.lower().endswith(('.txt', '.npz')):
                 continue
 
             try:
@@ -220,12 +220,7 @@ def prep_dataset(root_directory, soft_clean = False):
 
     print(f"{total_imgs} imgs in {root_directory} converted to .jpg Resized {resized} images.")
 
-    files = os.listdir(root_directory)
-    print(files)
-
-
 if __name__ == "__main__":
-    folder_path = "/data/xander/Projects/cog/GitHub_repos/flux-trainer/test"
+    folder_path = "test_imgs"
     caption_mode = "<CAPTION>"
-    batch_size = 1
-    florence_caption_dataset(folder_path, batch_size=batch_size, caption_mode = caption_mode)
+    florence_caption_dataset(folder_path, batch_size=2, caption_mode = caption_mode)
