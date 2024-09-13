@@ -33,6 +33,7 @@ Easiest way to download these models is:
 1. `pip install huggingface_hub`
 2. Grab your Huggingface token (account --> settings --> Access Tokens)
 3. `huggingface-cli login`
+
 And then run:
 ```
 mkdir models
