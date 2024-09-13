@@ -9,6 +9,8 @@ For now this is a utility wrapper around [kohya](https://github.com/kohya-ss/sd-
 - packaging and uploading outputs into a .tar file to upload
 
 ## Setup instructions:
+
+### 1. Setup the environment:
 ```
 conda create --name flux python=3.10
 conda activate flux
@@ -22,6 +24,10 @@ git checkout sd3
 pip install -r requirements.txt
 cd ..
 ```
+
+### 2. Download the Flux models into ./models:
+- [FLUX denoiser](https://huggingface.co/black-forest-labs/FLUX.1-dev/resolve/main/flux1-dev.safetensors) and [FLUX VAE](https://huggingface.co/black-forest-labs/FLUX.1-dev/resolve/main/ae.safetensors) from [here](https://huggingface.co/black-forest-labs/FLUX.1-dev/resolve/main)
+- [clip_l.safetensors](https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/clip_l.safetensors) and [T5_fp16.safetensors](https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp16.safetensors) from [here](https://huggingface.co/comfyanonymous/flux_text_encoders/tree/main)
 
 ## Training instructions:
 1. Create a folder of training images
