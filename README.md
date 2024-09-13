@@ -33,10 +33,10 @@ Easiest way to download these models is:
 1. `pip install huggingface_hub`
 2. Grab your Huggingface token (account --> settings --> Access Tokens)
 3. `huggingface-cli login`
-4. mkdir models
-5. cd models
 And then run:
 ```
+mkdir models
+cd models
 huggingface-cli download black-forest-labs/FLUX.1-dev flux1-dev.safetensors --repo-type model
 huggingface-cli download https://huggingface.co/black-forest-labs/FLUX.1-dev/resolve/main/ae.safetensors --repo-type model
 huggingface-cli download https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/clip_l.safetensors
