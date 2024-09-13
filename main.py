@@ -1,5 +1,6 @@
 import os
 import logging
+import argparse
 from utils import *
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -52,9 +53,18 @@ def construct_train_command(config: Dict[str, Any]) -> List[str]:
     return cmd
 
 def main():
-    config = construct_config("template/train_config.json")
-    prep_dataset(config["dataset_path"], hard_prep = False)
+    parser = argparse.ArgumentParser(description='Training script for flux network.')
+    parser.add_argument('--config', type=str, required=True, help='Path to the training config file (JSON).')
+    args = parser.parse_args()
+
+    # Load provided config:
+    config = construct_config(args.config)
+    
+    # Preprocess the dataset
+    prep_dataset(config["dataset_path"], hard_prep=False)
     florence_caption_dataset(config["dataset_path"], caption_mode=config["caption_mode"])
+    
+    # Construct and run the training command
     cmd = construct_train_command(config)
     run_job(cmd, config)
 
