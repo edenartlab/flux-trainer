@@ -38,10 +38,10 @@ And then run:
 ```
 mkdir models
 cd models
-huggingface-cli download black-forest-labs/FLUX.1-dev ae.safetensors --repo-type model
-huggingface-cli download black-forest-labs/FLUX.1-dev flux1-dev.safetensors  --repo-type model
-huggingface-cli download comfyanonymous/flux_text_encoders clip_l.safetensors --repo-type model
-huggingface-cli download comfyanonymous/flux_text_encoders t5xxl_fp16.safetensors --repo-type model
+huggingface-cli download black-forest-labs/FLUX.1-dev ae.safetensors --repo-type model --local-dir .
+huggingface-cli download black-forest-labs/FLUX.1-dev flux1-dev.safetensors  --repo-type model --local-dir .
+huggingface-cli download comfyanonymous/flux_text_encoders clip_l.safetensors --repo-type model --local-dir .
+huggingface-cli download comfyanonymous/flux_text_encoders t5xxl_fp16.safetensors --repo-type model --local-dir .
 ```
 
 ### 3. Run a training job:
