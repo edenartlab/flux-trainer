@@ -44,6 +44,8 @@ huggingface-cli download comfyanonymous/flux_text_encoders clip_l.safetensors --
 huggingface-cli download comfyanonymous/flux_text_encoders t5xxl_fp16.safetensors --repo-type model --local-dir .
 ```
 
+If you have all these models already downloaded somewhere else, you can just point to their paths in your `train_config.json` 
+
 ### 3. Run a training job:
 1. Create a folder of training images
 2. make a copy of `template/train_config.json` and adjust with your training setup.
