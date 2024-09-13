@@ -20,6 +20,7 @@ cd sd-scripts
 git checkout cefe52629e1901dd8192b0487afd5e9f089e3519
 git checkout sd3
 pip install -r requirements.txt
+cd ..
 ```
 
 ## Training instructions:
