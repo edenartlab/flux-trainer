@@ -1,4 +1,4 @@
 torch==2.4.1
-torchvision
-torchaudio
-timm
+torchvision==0.19.1
+torchaudio==2.4.1
+timm==1.0.9
