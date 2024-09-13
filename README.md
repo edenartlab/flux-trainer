@@ -26,7 +26,7 @@ cd ..
 ```
 
 ### 2. Download the Flux models into ./models:
-- [FLUX denoiser](https://huggingface.co/black-forest-labs/FLUX.1-dev/resolve/main/flux1-dev.safetensors) and [FLUX VAE](https://huggingface.co/black-forest-labs/FLUX.1-dev/resolve/main/ae.safetensors) from [here](https://huggingface.co/black-forest-labs/FLUX.1-dev/resolve/main)
+- [FLUX denoiser](https://huggingface.co/black-forest-labs/FLUX.1-dev/resolve/main/flux1-dev.safetensors) and [FLUX vae](https://huggingface.co/black-forest-labs/FLUX.1-dev/resolve/main/ae.safetensors) from [here](https://huggingface.co/black-forest-labs/FLUX.1-dev/resolve/main)
 - [clip_l.safetensors](https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/clip_l.safetensors) and [T5_fp16.safetensors](https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp16.safetensors) from [here](https://huggingface.co/comfyanonymous/flux_text_encoders/tree/main)
 
 Easiest way to download these models is:
@@ -37,10 +37,11 @@ And then run:
 ```
 mkdir models
 cd models
-huggingface-cli download black-forest-labs/FLUX.1-dev flux1-dev.safetensors --repo-type model
-huggingface-cli download https://huggingface.co/black-forest-labs/FLUX.1-dev/resolve/main/ae.safetensors --repo-type model
-huggingface-cli download https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/clip_l.safetensors  --repo-type model
-huggingface-cli download https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp16.safetensors  --repo-type model
+huggingface-cli download black-forest-labs/FLUX.1-dev ae.safetensors --repo-type model
+huggingface-cli download black-forest-labs/FLUX.1-dev flux1-dev.safetensors  --repo-type model
+huggingface-cli download comfyanonymous/flux_text_encoders clip_l.safetensors --repo-type model
+huggingface-cli download comfyanonymous/flux_text_encoders t5xxl_fp16.safetensors --repo-type model
+
 ```
 
 ### 3. Run a training job:
