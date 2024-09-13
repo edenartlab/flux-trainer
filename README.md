@@ -29,6 +29,20 @@ cd ..
 - [FLUX denoiser](https://huggingface.co/black-forest-labs/FLUX.1-dev/resolve/main/flux1-dev.safetensors) and [FLUX VAE](https://huggingface.co/black-forest-labs/FLUX.1-dev/resolve/main/ae.safetensors) from [here](https://huggingface.co/black-forest-labs/FLUX.1-dev/resolve/main)
 - [clip_l.safetensors](https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/clip_l.safetensors) and [T5_fp16.safetensors](https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp16.safetensors) from [here](https://huggingface.co/comfyanonymous/flux_text_encoders/tree/main)
 
+Easiest way to download these models is:
+1. `pip install huggingface_hub`
+2. Grab your Huggingface token (account --> settings --> Access Tokens)
+3. `huggingface-cli login`
+4. mkdir models
+5. cd models
+And then run:
+```
+huggingface-cli download black-forest-labs/FLUX.1-dev flux1-dev.safetensors --repo-type model
+huggingface-cli download https://huggingface.co/black-forest-labs/FLUX.1-dev/resolve/main/ae.safetensors --repo-type model
+huggingface-cli download https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/clip_l.safetensors
+huggingface-cli download https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp16.safetensors
+```
+
 ### 3. Run a training job:
 1. Create a folder of training images
 2. make a copy of `template/train_config.json` with your training setup.
