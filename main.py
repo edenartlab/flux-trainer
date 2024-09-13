@@ -2,20 +2,24 @@ import json
 import subprocess
 import os
 from datetime import datetime
+from utils import florence_caption_dataset, prep_dataset
+import toml
 
-def load_config(config_path):
+def construct_config(config_path, toml_path, dataset_path, caption_prefix = "", caption_suffix = "", mode = "style"):
     with open(config_path, 'r') as f:
-        return json.load(f)
+        config = json.load(f)
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+    config["timestamp"] = timestamp
+    return config
 
 def get_script_directory():
     return os.path.dirname(os.path.abspath(__file__))
 
 def construct_command(config):
     script_dir = get_script_directory()
-    flux_train_network_path = os.path.join(script_dir, "sd-scripts", "flux_train_network.py")
     
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M")
-    output_name = f"{os.path.basename(config['DATASET_CONFIG']).rsplit('.', 1)[0]}_{timestamp}"
+    output_name = f"{os.path.basename(config['DATASET_CONFIG']).rsplit('.', 1)[0]}_{config["timestamp"]}"
     output_dir = f"results/{output_name}"
 
     cmd = [
@@ -23,7 +27,7 @@ def construct_command(config):
         "--mixed_precision", "bf16",
         "--num_cpu_threads_per_process", "1",
         "--num_processes", "1",
-        flux_train_network_path,
+        os.path.join(script_dir, "sd-scripts", "flux_train_network.py"),
         "--dataset_config", config['DATASET_CONFIG'],
         "--pretrained_model_name_or_path", config['MODEL_PATH'],
         "--clip_l", config['CLIP_L_PATH'],
@@ -63,12 +67,9 @@ def construct_command(config):
 
     return cmd
 
-def main():
-    config = load_config('train_config.json')
-    cmd = construct_command(config)
+def run_job(cmd, config):
 
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M")
-    log_file = f"training_log_{timestamp}.txt"
+    log_file = f"training_log_{config["timestamp"]}.txt"
 
     with open(log_file, 'w') as f:
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
@@ -79,6 +80,15 @@ def main():
 
     if process.wait() != 0:
         print(f"Command failed with return code {process.returncode}")
+
+
+def main():
+    toml_path = "dataseet512.toml"
+    dataset_path = "/data/xander/Projects/cog/xander_eden_stuff/clipxdata/clipx_dataset"
+
+    config = construct_config('train_config.json')
+    cmd = construct_command(config)
+    run_job(cmd, config)
 
 if __name__ == "__main__":
     main()
