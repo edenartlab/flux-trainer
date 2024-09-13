@@ -17,6 +17,7 @@ cd flux-trainer
 pip install -r requirements.txt
 git clone https://github.com/kohya-ss/sd-scripts.git
 cd sd-scripts
+git checkout cefe52629e1901dd8192b0487afd5e9f089e3519
 git checkout sd3
 pip install -r requirements.txt
 ```
