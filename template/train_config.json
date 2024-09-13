@@ -14,8 +14,8 @@
     "sample_every_n_steps": "100",
     "seed": "42",
 
-    "MODEL_PATH": "/data/xander/Projects/cog/GitHub_repos/ComfyUI/models/unet/flux1-dev.safetensors",
-    "CLIP_L_PATH": "/data/xander/Projects/cog/GitHub_repos/ComfyUI/models/clip/clip_l.safetensors",
-    "T5XXL_PATH": "/data/xander/Projects/cog/GitHub_repos/ComfyUI/models/clip/t5xxl_fp16.safetensors",
-    "AE_PATH": "/data/xander/Projects/cog/GitHub_repos/ComfyUI/models/vae/ae.safetensors"
+    "MODEL_PATH": "models/flux1-dev.safetensors",
+    "CLIP_L_PATH": "models/clip_l.safetensors",
+    "T5XXL_PATH": "models/t5xxl_fp16.safetensors",
+    "AE_PATH": "models/ae.safetensors"
 }
