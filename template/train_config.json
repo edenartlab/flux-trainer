@@ -3,8 +3,8 @@
     "mode": "style",
     "caption_prefix": "", 
     "caption_suffix": "",
-    "dataset_toml": "dataset_template_512.toml",
-    "eval_prompts": "eval_prompts.txt",
+    "dataset_toml": "template/dataset_template_512.toml",
+    "eval_prompts": "template/eval_prompts.txt",
 
     "caption_mode": "<CAPTION>",
     "lora_rank": "16",

@@ -14,5 +14,5 @@ max_bucket_reso = 768
 bucket_reso_steps = 64
 
   [[datasets.subsets]]
-  image_dir = "/data/xander/Projects/cog/xander_eden_stuff/clipxdata/clipx_dataset"
+  image_dir = "path_to_your_dataset_folder"
   num_repeats = 1
