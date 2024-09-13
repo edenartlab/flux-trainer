@@ -1,12 +1,12 @@
 {
-    "dataset_path": "/data/xander/Projects/cog/GitHub_repos/flux-trainer/test_imgs",
+    "dataset_path": "/data/xander/Projects/cog/xander_eden_stuff/worlds/ethereal_misc",
     "mode": "style",
-    "caption_mode": "<CAPTION>",
     "caption_prefix": "", 
     "caption_suffix": "",
     "dataset_toml": "dataset_template_512.toml",
     "eval_prompts": "eval_prompts.txt",
 
+    "caption_mode": "<CAPTION>",
     "lora_rank": "16",
     "learning_rate": "1.5e-4",
     "max_train_steps": "4000",
@@ -18,5 +18,4 @@
     "CLIP_L_PATH": "/data/xander/Projects/cog/GitHub_repos/ComfyUI/models/clip/clip_l.safetensors",
     "T5XXL_PATH": "/data/xander/Projects/cog/GitHub_repos/ComfyUI/models/clip/t5xxl_fp16.safetensors",
     "AE_PATH": "/data/xander/Projects/cog/GitHub_repos/ComfyUI/models/vae/ae.safetensors"
-
 }
