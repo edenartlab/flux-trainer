@@ -25,29 +25,31 @@ def path_to_str(obj: Any) -> Any:
 
 def construct_toml(config: Dict[str, Any]) -> Dict[str, Any]:
     """Construct and update the TOML configuration file."""
-    try:
-        with open(config["dataset_toml"], 'r') as file:
-            toml_data = toml.load(file)
 
-        if 'datasets' in toml_data:
-            for dataset in toml_data['datasets']:
-                if 'subsets' in dataset:
-                    for subset in dataset['subsets']:
-                        subset['image_dir'] = config['dataset_path']
-        logging.info(f"All instances of 'image_dir' in dataset.toml updated to: {config['dataset_path']}")
-        
-        toml_data['general']['flip_aug'] = config["mode"] != "face"
-        if not toml_data['general']['flip_aug']:
-            logging.info("Disabling flip augmentation for face mode.")
+    with open(config["dataset_toml"], 'r') as file:
+        toml_data = toml.load(file)
 
-        toml_file_path = Path(config["output_dir"]) / "dataset.toml"
-        with open(toml_file_path, 'w') as file:
-            toml.dump(toml_data, file)
-        
-        config["dataset_config"] = str(toml_file_path)
-    except Exception as e:
-        logging.error(f"Error in construct_toml: {str(e)}")
-        raise
+    if 'datasets' in toml_data:
+        for dataset in toml_data['datasets']:
+            if 'subsets' in dataset:
+                for subset in dataset['subsets']:
+                    subset['image_dir'] = config['dataset_path']
+                    if config["caption_prefix"]:
+                        subset['caption_prefix'] = config["caption_prefix"]
+                    if config["caption_suffix"]:
+                        subset['caption_suffix'] = config["caption_suffix"]
+
+    logging.info(f"All instances of 'image_dir' in dataset.toml updated to: {config['dataset_path']}")
+    
+    toml_data['general']['flip_aug'] = config["mode"] != "face"
+    if not toml_data['general']['flip_aug']:
+        logging.info("Disabling flip augmentation for face mode.")
+    
+    toml_file_path = Path(config["output_dir"]) / "dataset.toml"
+    with open(toml_file_path, 'w') as file:
+        toml.dump(toml_data, file)
+    
+    config["dataset_config"] = str(toml_file_path)
 
     return config
 
@@ -179,6 +181,48 @@ def florence_caption_dataset(dataset_dir,
 
     return
 
+
+def load_image_with_orientation(path, mode="RGB"):
+    image = Image.open(path)
+
+    # Try to get the Exif orientation tag (0x0112), if it exists
+    try:
+        exif_data = image._getexif()
+        orientation = exif_data.get(0x0112)
+    except (AttributeError, KeyError, IndexError):
+        orientation = None
+
+    # Apply the orientation, if it's present
+    if orientation:
+        if orientation == 2:
+            image = image.transpose(Image.FLIP_LEFT_RIGHT)
+        elif orientation == 3:
+            image = image.rotate(180, expand=True)
+        elif orientation == 4:
+            image = image.transpose(Image.FLIP_TOP_BOTTOM)
+        elif orientation == 5:
+            image = image.rotate(-90, expand=True).transpose(Image.FLIP_LEFT_RIGHT)
+        elif orientation == 6:
+            image = image.rotate(-90, expand=True)
+        elif orientation == 7:
+            image = image.rotate(90, expand=True).transpose(Image.FLIP_LEFT_RIGHT)
+        elif orientation == 8:
+            image = image.rotate(90, expand=True)
+
+    if image.mode == 'P':
+        image = image.convert('RGBA')
+    if image.mode == 'CMYK':
+        image = image.convert('RGB')
+
+    # Remove alpha channel if present
+    if image.mode in ('RGBA', 'LA'):
+        background = Image.new('RGB', image.size, (255, 255, 255))
+        background.paste(image, mask=image.split()[3])  # 3 is the alpha channel
+        image = background
+
+    # Convert to the desired mode
+    return image.convert(mode)
+
 def prep_dataset(root_directory, hard_prep = True):
     error_dir = os.path.join(os.path.dirname(root_directory), 'error_dataset_files')
     os.makedirs(error_dir, exist_ok=True)
@@ -194,20 +238,18 @@ def prep_dataset(root_directory, hard_prep = True):
                 continue
 
             try:
-                # Try loading the file as an image and converting it to RGB
-                with Image.open(file_path) as img:
-                    img = img.convert("RGB")
-                    
-                    if max(img.width, img.height) > 2048:
-                        # Resize the image with max width/height of 2048
-                        img.thumbnail((2048, 2048), Image.LANCZOS)
-                        resized += 1
-                    
-                    # Save the image as .jpg
-                    new_filename = os.path.splitext(file)[0] + '.jpg'
-                    new_file_path = os.path.join(subdir, new_filename)
-                    img.save(new_file_path, 'JPEG', quality=95)
-                    total_imgs += 1
+                img = load_image_with_orientation(file_path, mode="RGB")
+                
+                if max(img.width, img.height) > 2048:
+                    # Resize the image with max width/height of 2048
+                    img.thumbnail((2048, 2048), Image.LANCZOS)
+                    resized += 1
+                
+                # Save the image as .jpg
+                new_filename = os.path.splitext(file)[0] + '.jpg'
+                new_file_path = os.path.join(subdir, new_filename)
+                img.save(new_file_path, 'JPEG', quality=95)
+                total_imgs += 1
                 
                 # Delete the original file if it was different from the new one:
                 if new_file_path != file_path:

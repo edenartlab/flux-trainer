@@ -62,7 +62,9 @@ def main():
     
     # Preprocess the dataset
     prep_dataset(config["dataset_path"], hard_prep=False)
-    florence_caption_dataset(config["dataset_path"], caption_mode=config["caption_mode"])
+
+    if config["caption_mode"]:
+        florence_caption_dataset(config["dataset_path"], caption_mode=config["caption_mode"])
     
     # Construct and run the training command
     cmd = construct_train_command(config)
