@@ -1,6 +1,7 @@
-a man walking down the street --w 768 --h 768 --s 20 --d 0
-a massive nuclear explosion in the desert --w 768 --h 768 --s 20 --d 1
-a painting of a beautiful young man with a mustache by Vincent van Gogh, starry night sky and beautiful city in the background --w 768 --h 768 --s 20 --d 2
-a stunning artwork in the forest, masterpiece --w 768 --h 768 --s 20 --d 3
-a photo of a man chilling on the top of the piramid of Gizeh --w 1024 --h 1024 --s 30 --d 4
-a close-up of a bare chested man riding a giant armored polar bear --w 1024 --h 1024 --s 30 --d 5
+a xanderman walking down the street --w 768 --h 768 --s 20 --d 0
+a massive nuclear explosion, the cloud looks like xanderman --w 768 --h 768 --s 20 --d 1
+a painting of a beautiful young xanderman with a mustache by Vincent van Gogh, starry night sky and beautiful city in the background --w 768 --h 768 --s 20 --d 2
+a stunning artwork of xanderman in the forest, masterpiece --w 768 --h 768 --s 20 --d 3
+a closeup portrait of a xanderman climbing the summit of Mount Everest --w 1024 --h 1024 --s 30 --d 4
+a close-up of a bare chested xanderman riding a giant armored polar bear --w 1024 --h 1024 --s 30 --d 5
+a depication of xanderman as a lego figure --w 1024 --h 1024 --s 30 --d 5

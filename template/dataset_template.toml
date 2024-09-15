@@ -1,5 +1,4 @@
 [general]
-# define common settings here
 flip_aug = false
 color_aug = false
 shuffle_caption = false
@@ -15,7 +14,7 @@ max_bucket_reso = 768
 bucket_reso_steps = 64
 
   [[datasets.subsets]]
-  image_dir = "/data/xander/Projects/cog/xander_eden_stuff/clipxdata/clipx_dataset"
+  image_dir = "path_to_your_dataset_folder"
   num_repeats = 1
   caption_prefix = "a candid photo of a handsome young man with short, curly brown hair and a mustache." 
 
@@ -28,7 +27,7 @@ max_bucket_reso = 1024
 bucket_reso_steps = 64
 
   [[datasets.subsets]]
-  image_dir = "/data/xander/Projects/cog/xander_eden_stuff/clipxdata/clipx_dataset"
+  image_dir = "path_to_your_dataset_folder"
   num_repeats = 1
   caption_prefix = "a candid photo of a handsome young man with short, curly brown hair and a mustache." 
 
@@ -41,6 +40,6 @@ max_bucket_reso = 1280
 bucket_reso_steps = 64
 
   [[datasets.subsets]]
-  image_dir = "/data/xander/Projects/cog/xander_eden_stuff/clipxdata/clipx_dataset"
+  image_dir = "path_to_your_dataset_folder"
   num_repeats = 1
   caption_prefix = "a candid photo of a handsome young man with short, curly brown hair and a mustache." 
