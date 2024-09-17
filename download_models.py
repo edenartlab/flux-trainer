@@ -36,6 +36,8 @@ def download_flux(models_dir):
     # Ensure that the token is set
     if not hf_token:
         raise ValueError("Hugging Face token not found. Make sure it's set in the .env file.")
+    else:
+        print("Hugging Face token successfully loaded!")
 
     # Log in to Hugging Face CLI using the token
     os.system(f'huggingface-cli login --token {hf_token}')

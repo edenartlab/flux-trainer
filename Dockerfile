@@ -3,6 +3,10 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
+# Allow passing Hugging Face token as a build argument
+ARG HF_TOKEN
+ENV HF_TOKEN=${HF_TOKEN}
+
 # Install system dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -33,8 +37,8 @@ RUN git clone https://github.com/kohya-ss/sd-scripts.git \
 # Install additional dependencies for the project
 RUN pip install --no-cache-dir huggingface_hub python-dotenv
 
-# Run download_models.py once to trigger model downloads
-RUN python3 download_models.py
+# Run download_models.py once to trigger model downloads, using the Hugging Face token
+RUN HF_TOKEN=${HF_TOKEN} python3 download_models.py
 
 # Set the default command to python
 CMD ["python3", "main.py", "--config", "templates/train_config.json"]

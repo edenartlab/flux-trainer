@@ -57,9 +57,12 @@ If you have all these models already downloaded somewhere else, you can just poi
 
 
 ## Building with docker:
-`docker build -t flux-trainer . `
-or 
-`docker build --no-cache -t flux-trainer . `
+
+`docker build --build-arg HF_TOKEN=your_hf_token -t flux-trainer . `
+or
+
+`docker build --no-cache --build-arg HF_TOKEN=your_hf_token -t flux-trainer . `
+
 
 and then run eg:
 `docker run -it flux-trainer`
