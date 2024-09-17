@@ -10,6 +10,7 @@ ENV HF_TOKEN=${HF_TOKEN}
 # Install system dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
+    libgl1-mesa-glx \
     git \
     wget \
     curl \
@@ -41,4 +42,4 @@ RUN pip install --no-cache-dir huggingface_hub python-dotenv
 RUN HF_TOKEN=${HF_TOKEN} python3 download_models.py
 
 # Set the default command to python
-CMD ["python3", "main.py", "--config", "templates/train_config.json"]
+CMD ["python3", "main.py", "--config", "template/train_config.json"]
