@@ -15,6 +15,9 @@ RUN apt-get update && \
 RUN git clone https://github.com/edenartlab/flux-trainer.git
 WORKDIR /app/flux-trainer
 
+# Copy .env file from local machine to the container
+COPY .env /app/flux-trainer/.env
+
 # Install the main requirements
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
