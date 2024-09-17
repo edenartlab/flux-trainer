@@ -35,7 +35,7 @@ def download_flux(models_dir):
 
     # Ensure that the token is set
     if not hf_token:
-        raise ValueError("Hugging Face token not found. Make sure it's set in the .env file.")
+        raise ValueError("Hugging Face token not found. Make sure it's set in the .env file or set as an environment variable.")
     else:
         print("Hugging Face token successfully loaded!")
 
