@@ -52,3 +52,17 @@ If you have all these models already downloaded somewhere else, you can just poi
 3. Optionally adjust `template/eval_prompts.txt`
 3. run `python main.py --config /path/to/train_config.json`
 4. All the logs, samples and .safetensors files will appear under ./results
+
+
+
+
+## Building with docker:
+`docker build -t flux-trainer . `
+or 
+`docker build --no-cache -t flux-trainer . `
+
+and then run eg:
+`docker run -it flux-trainer`
+
+or get a shell inside the container:
+`docker exec -it flux-trainer /bin/bash`

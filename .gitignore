@@ -1,3 +1,4 @@
+.env
 sd-scripts/*
 *log*.txt
 results
