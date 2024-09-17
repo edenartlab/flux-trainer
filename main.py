@@ -61,7 +61,8 @@ def main():
     config = construct_config(args.config)
     
     # Preprocess the dataset
-    prep_dataset(config["dataset_path"], hard_prep=False)
+    if config["prep_dataset"]:
+        prep_dataset(config["dataset_path"], hard_prep=True)
 
     if config["caption_mode"]:
         florence_caption_dataset(config["dataset_path"], caption_mode=config["caption_mode"])

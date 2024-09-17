@@ -1,5 +1,6 @@
 {
     "dataset_path": "/data/xander/Projects/cog/xander_eden_stuff/worlds/ethereal_misc",
+    "prep_dataset": true,
     "mode": "style",
     "caption_prefix": "", 
     "caption_suffix": "",
