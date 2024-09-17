@@ -30,7 +30,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN git clone https://github.com/kohya-ss/sd-scripts.git \
     && cd sd-scripts \
     && git checkout sd3 \
-    && git checkout cefe52629e1901dd8192b0487afd5e9f089e3519 \
+    && git checkout a2ad7e5644f08141fe053a2b63446d70d777bdcf \
     && pip install --no-cache-dir -r requirements.txt \
     && cd ..
 
