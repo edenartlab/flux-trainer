@@ -7,13 +7,15 @@ WORKDIR /app
 ARG HF_TOKEN
 ENV HF_TOKEN=${HF_TOKEN}
 
-# Install system dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-    libgl1-mesa-glx \
     git \
     wget \
     curl \
+    libgl1-mesa-glx \
+    libgstreamer1.0-0 \
+    libgstreamer-plugins-base1.0-dev \
+    libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone the repository and set the working directory to flux-trainer
