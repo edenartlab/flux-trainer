@@ -1,9 +1,10 @@
 import os
 import logging
+import sys
 import argparse
 from utils import *
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s', stream=sys.stdout)
 
 def construct_train_command(config: Dict[str, Any]) -> List[str]:
     """Construct the training command."""
