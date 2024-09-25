@@ -39,7 +39,7 @@ EXPOSE 8080
 ENV PYTHONUNBUFFERED=1
 
 # Run download_models.py once to trigger model downloads, using the Hugging Face token
-RUN HF_TOKEN=${HF_TOKEN} python3 download_models.py
+# RUN HF_TOKEN=${HF_TOKEN} python3 download_models.py
 RUN . /app/flux-trainer
 
 
