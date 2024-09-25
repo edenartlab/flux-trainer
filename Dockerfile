@@ -22,11 +22,9 @@ RUN apt-get update && \
 RUN git clone https://github.com/edenartlab/flux-trainer.git
 WORKDIR /app/flux-trainer
 
-# Copy .env file from local machine to the container
-COPY .env /app/flux-trainer/.env
+RUN . /app/flux-trainer
 
 # Install the main requirements
-COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Clone and setup sd-scripts
@@ -40,8 +38,11 @@ RUN git clone https://github.com/kohya-ss/sd-scripts.git \
 # Install additional dependencies for the project
 RUN pip install --no-cache-dir huggingface_hub python-dotenv
 
+EXPOSE 8080
+ENV PYTHONUNBUFFERED=1
+
 # Run download_models.py once to trigger model downloads, using the Hugging Face token
 RUN HF_TOKEN=${HF_TOKEN} python3 download_models.py
 
 # Set the default command to python
-CMD ["python3", "main.py", "--config", "template/train_config.json"]
+CMD ["python3", "-u", "main.py", "--config", "template/train_config.json"]
