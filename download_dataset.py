@@ -45,7 +45,7 @@ def download_dataset(dataset_urls: List[str]):
     """
     Downloads and extracts datasets from the provided URLs.
     """
-    dataset_path = "app/dataset"
+    dataset_path = "training_images"
     if os.path.exists(dataset_path):
         print("DELETED EXISTING FOLDER")
         shutil.rmtree(dataset_path)
