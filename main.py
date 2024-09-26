@@ -3,6 +3,7 @@ import logging
 import sys
 import argparse
 from utils import *
+from download_dataset import *
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s', stream=sys.stdout)
 
@@ -55,20 +56,29 @@ def construct_train_command(config: Dict[str, Any]) -> List[str]:
 
 def main():
     parser = argparse.ArgumentParser(description='Training script for flux network.')
+   
+    # Add arguments for dataset URL and config file
+    parser.add_argument('--dataset_url', required=True, help="URL of the dataset to download and train on")
     parser.add_argument('--config', type=str, required=True, help='Path to the training config file (JSON).')
+
+    # Parse the arguments
     args = parser.parse_args()
 
-    # Load provided config:
+    # Step 1: Download the dataset from the URL provided
+    download_dataset(args.dataset_url)
+
+    # Step 2: Load the training config from the provided file
     config = construct_config(args.config)
-    
-    # Preprocess the dataset
-    if config["prep_dataset"]:
+
+    # Step 3: Preprocess the dataset if required
+    if config.get("prep_dataset"):
         prep_dataset(config["dataset_path"], hard_prep=True)
 
-    if config["caption_mode"]:
+    # Step 4: Perform dataset captioning if enabled in the config
+    if config.get("caption_mode"):
         florence_caption_dataset(config["dataset_path"], caption_mode=config["caption_mode"])
-    
-    # Construct and run the training command
+
+    # Step 5: Construct and run the training command
     cmd = construct_train_command(config)
     run_job(cmd, config)
 
