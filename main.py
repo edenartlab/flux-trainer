@@ -65,7 +65,7 @@ def main():
     args = parser.parse_args()
 
     # Step 1: Download the dataset from the URL provided
-    download_dataset(args.dataset_url)
+    download_dataset([args.dataset_url])
 
     # Step 2: Load the training config from the provided file
     config = construct_config(args.config)
