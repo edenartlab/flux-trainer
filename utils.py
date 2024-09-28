@@ -84,7 +84,7 @@ def run_job(cmd: List[str], config: Dict[str, Any]) -> None:
         with open(log_file, 'w') as f:
             process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
             for line in process.stdout:
-                print(line, end='')
+                print(line, end='', flush=True)
                 f.write(line)
                 f.flush()
 
@@ -136,10 +136,10 @@ def florence_caption_dataset(dataset_dir,
     os.makedirs(florence_model_path, exist_ok=True)
     image_paths, caption_paths = get_image_and_caption_paths(dataset_dir)
 
-    print(f"Found {len(image_paths)} images and {len(caption_paths)} txt files.")
+    print(f"Found {len(image_paths)} images and {len(caption_paths)} txt files., flush=True")
     if len(caption_paths):
-        print(f"WARNING: This script will overwrite the existing txt files!!")
-    print(f"Captioning {len(image_paths)} images...")
+        print(f"WARNING: This script will overwrite the existing txt files!!", flush=True)
+    print(f"Captioning {len(image_paths)} images...", flush=True)
 
     with patch("transformers.dynamic_module_utils.get_imports", fixed_get_imports):
         model = AutoModelForCausalLM.from_pretrained("microsoft/Florence-2-large", attn_implementation="sdpa", device_map=device, torch_dtype=torch_dtype, trust_remote_code=True, cache_dir=florence_model_path)
@@ -227,7 +227,7 @@ def prep_dataset(root_directory, hard_prep = True):
     error_dir = os.path.join(os.path.dirname(root_directory), 'error_dataset_files')
     os.makedirs(error_dir, exist_ok=True)
 
-    print("Preparing dataset folder {root_directory}...")
+    print("Preparing dataset folder {root_directory}...", flush=True)
     total_imgs, resized = 0, 0
 
     for subdir, _, files in os.walk(root_directory):
@@ -257,10 +257,10 @@ def prep_dataset(root_directory, hard_prep = True):
 
             except Exception as e:
                 # If there was any error, move the file to the errors directory
-                print(f"Error preparing img: {e}")
+                print(f"Error preparing img: {e}", flush=True)
                 shutil.move(file_path, os.path.join(error_dir, file))
 
-    print(f"{total_imgs} imgs in {root_directory} converted to .jpg Resized {resized} images.")
+    print(f"{total_imgs} imgs in {root_directory} converted to .jpg Resized {resized} images.", flush=True)
 
 if __name__ == "__main__":
     folder_path = "test_imgs"

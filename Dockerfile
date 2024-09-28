@@ -1,5 +1,6 @@
 # Use an official Python runtime as a parent image
 FROM python:3.10-slim
+ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
@@ -23,10 +24,7 @@ RUN git clone https://github.com/edenartlab/flux-trainer.git
 WORKDIR /app/flux-trainer
 
 # Copy .env file from local machine to the container
-COPY .env /app/flux-trainer/.env
-
-# Install the main requirements
-COPY requirements.txt .
+COPY . /app/flux-trainer/
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Clone and setup sd-scripts
@@ -44,4 +42,4 @@ RUN pip install --no-cache-dir huggingface_hub python-dotenv
 RUN HF_TOKEN=${HF_TOKEN} python3 download_models.py
 
 # Set the default command to python
-CMD ["python3", "main.py", "--config", "template/train_config.json"]
+ENTRYPOINT ["python3", "main.py", "--config", "template/train_config.json"]

@@ -1,5 +1,5 @@
 {
-    "dataset_path": "/data/xander/Projects/cog/xander_eden_stuff/worlds/ethereal_misc",
+    "dataset_path": "training_images",
     "prep_dataset": true,
     "mode": "style",
     "caption_prefix": "", 

@@ -19,7 +19,7 @@ torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
 
 @torch.no_grad()
 def download_florence(models_dir):
-    print("Downloading florence2...")
+    print("Downloading florence2...", flush=True)
     with patch("transformers.dynamic_module_utils.get_imports", fixed_get_imports):
         model = AutoModelForCausalLM.from_pretrained("microsoft/Florence-2-large", attn_implementation="sdpa", device_map=device, torch_dtype=torch_dtype, trust_remote_code=True, cache_dir=models_dir)
             
@@ -37,7 +37,7 @@ def download_flux(models_dir):
     if not hf_token:
         raise ValueError("Hugging Face token not found. Make sure it's set in the .env file or set as an environment variable.")
     else:
-        print("Hugging Face token successfully loaded!")
+        print("Hugging Face token successfully loaded!", flush=True)
 
     # Log in to Hugging Face CLI using the token
     os.system(f'huggingface-cli login --token {hf_token}')
@@ -51,7 +51,7 @@ def download_flux(models_dir):
     ]
 
     # Download each model
-    print("Downloading flux...")
+    print("Downloading flux...", flush=True)
     for repo, filename in models_to_download:
         os.system(f'huggingface-cli download {repo} {filename} --repo-type model --local-dir {models_dir}')
 
