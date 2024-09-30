@@ -61,7 +61,7 @@ def construct_config(config_path: str) -> Dict[str, Any]:
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M")
         config["timestamp"] = timestamp
-        config["output_name"] = f"{Path(config['dataset_path']).name}_{timestamp}"
+        config["output_name"] = f"{Path(config['dataset_path']).name}_{timestamp}.zip"
         config["output_dir"] = str(Path("results") / config['output_name'])
 
         Path(config["output_dir"]).mkdir(parents=True, exist_ok=True)
