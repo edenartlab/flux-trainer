@@ -1,11 +1,26 @@
+
+print("FLUX-TRAINER 1")
 import os
 import logging
 import sys
 import argparse
+import boto3
+from pymongo import MongoClient
+from bson import ObjectId
+
+import s3
 from utils import *
 from download_dataset import *
 
+MONGO_URI=os.getenv("MONGO_URI")
+MONGO_DB_NAME_STAGE=os.getenv("MONGO_DB_NAME_STAGE")
+
+client = MongoClient(MONGO_URI)
+db = client[MONGO_DB_NAME_STAGE]
+models_collection = db["models"]
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s', stream=sys.stdout)
+
 
 def construct_train_command(config: Dict[str, Any]) -> List[str]:
     """Construct the training command."""
@@ -58,18 +73,34 @@ def main():
     parser = argparse.ArgumentParser(description='Training script for flux network.')
    
     # Add arguments for dataset URL and config file
-    parser.add_argument('--dataset_url', required=True, help="URL of the dataset to download and train on")
-    parser.add_argument('--config', type=str, required=True, help='Path to the training config file (JSON).')
+    parser.add_argument('--dataset_url', default="https://edenartlab-prod-data.s3.us-east-1.amazonaws.com/518db09067455b60bb3fab0561aa6c7466592f9b34bba770fa022cf299bbcd12.zip", help="URL of the dataset to download and train on")
+    parser.add_argument('--config', type=str, default="template/train_config.json", help='Path to the training config file (JSON).')
+    parser.add_argument('--name', type=str, default="concept", help='Name of the LoRA')
+    parser.add_argument('--lora_rank', type=str, default="16", help='LoRA rank for training')
+    parser.add_argument('--learning_rate', type=str, default="2.5e-4", help='Learning rate for training')
+    parser.add_argument('--max_train_steps', type=str, default="500", help='Maximum number of training steps')
+    parser.add_argument('--env', type=str, default="STAGE", choices=["STAGE", "PROD"], help='Environment to upload the model to')
 
     # Parse the arguments
     args = parser.parse_args()
+    print("ARGS", args)
+    for arg, value in vars(args).items():
+        print(f"{arg}: {value}")
 
+    print(args.dataset_url)
     # Step 1: Download the dataset from the URL provided
     download_dataset([args.dataset_url])
 
+    print(args.config)
     # Step 2: Load the training config from the provided file
     config = construct_config(args.config)
 
+    # overwrite config with args
+    config["lora_rank"] = args.lora_rank
+    config["learning_rate"] = args.learning_rate
+    config["max_train_steps"] = args.max_train_steps
+    print(config)
+    
     # Step 3: Preprocess the dataset if required
     if config.get("prep_dataset"):
         prep_dataset(config["dataset_path"], hard_prep=True)
@@ -82,5 +113,22 @@ def main():
     cmd = construct_train_command(config)
     run_job(cmd, config)
 
+    # save the result
+    output_dir = config["output_dir"]
+    cmd = f"zip -r {output_dir}.zip {output_dir}"
+    subprocess.run(cmd, shell=True)
+
+    file_url, name = s3.upload_file(
+        f"{output_dir}.zip",
+        env=args.env
+    )
+    models_collection.insert_one({
+        "checkpoint": file_url,
+        "name": args.name}
+    )
+
+    print("FLUX-TRAINER end")
+
 if __name__ == "__main__":
     main()
+
