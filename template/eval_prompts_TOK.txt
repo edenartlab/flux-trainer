@@ -1,0 +1,6 @@
+TOK walking down the street, New York city, setting sun --w 768 --h 768 --s 20 --d 0
+a painting of a beautiful young TOK with a mustache by Vincent van Gogh, starry night sky and beautiful city in the background --w 768 --h 768 --s 20 --d 2
+a stunning artwork of TOK in the forest, masterpiece --w 768 --h 768 --s 20 --d 3
+a closeup portrait of TOK climbing the summit of Mount Everest --w 1024 --h 1024 --s 30 --d 4
+a close-up of a bare chested TOK riding a giant armored polar bear --w 1024 --h 1024 --s 30 --d 5
+a depication of TOK as a lego figure --w 1024 --h 1024 --s 30 --d 5
