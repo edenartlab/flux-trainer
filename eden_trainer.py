@@ -4,6 +4,8 @@ import argparse
 
 from utils import *
 from download_dataset import *
+import eden_utils
+
 
 logging.basicConfig(
     level=logging.INFO, 
@@ -66,6 +68,11 @@ def main():
     # Add arguments for dataset URL and config file
     parser.add_argument('--dataset_url', default="https://edenartlab-prod-data.s3.us-east-1.amazonaws.com/518db09067455b60bb3fab0561aa6c7466592f9b34bba770fa022cf299bbcd12.zip", help="URL of the dataset to download and train on")
     parser.add_argument('--config', type=str, default="template/train_config.json", help='Path to the training config file (JSON).')
+    parser.add_argument('--name', type=str, default="concept", help='Name of the LoRA')
+    parser.add_argument('--lora_rank', type=str, default="16", help='LoRA rank for training')
+    parser.add_argument('--learning_rate', type=str, default="2.5e-4", help='Learning rate for training')
+    parser.add_argument('--max_train_steps', type=str, default="500", help='Maximum number of training steps')
+    parser.add_argument('--env', type=str, default="STAGE", choices=["STAGE", "PROD"], help='Environment to upload the model to')
 
     # Parse the arguments
     args = parser.parse_args()
@@ -76,6 +83,11 @@ def main():
     # Step 2: Load the training config from the provided file
     config = construct_config(args.config)
 
+    # overwrite config with args
+    config["lora_rank"] = args.lora_rank
+    config["learning_rate"] = args.learning_rate
+    config["max_train_steps"] = args.max_train_steps
+    
     # Step 3: Preprocess the dataset if required
     if config.get("prep_dataset"):
         prep_dataset(config["dataset_path"], hard_prep=True)
@@ -87,6 +99,8 @@ def main():
     # Step 5: Construct and run the training command
     cmd = construct_train_command(config)
     run_job(cmd, config)
+
+    eden_utils.upload_to_eden(config["output_dir"])
 
 
 if __name__ == "__main__":

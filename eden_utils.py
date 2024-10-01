@@ -8,15 +8,22 @@ import requests
 import tempfile
 from typing import Iterator
 from PIL import Image
+from pymongo import MongoClient
 from dotenv import load_dotenv
 load_dotenv()
 
+
+MONGO_URI=os.getenv("MONGO_URI")
+MONGO_DB_NAME_STAGE=os.getenv("MONGO_DB_NAME_STAGE")
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 AWS_REGION_NAME = os.getenv("AWS_REGION_NAME")
 AWS_BUCKET_NAME_STAGE = os.getenv("AWS_BUCKET_NAME_STAGE")
 AWS_BUCKET_NAME_PROD = os.getenv("AWS_BUCKET_NAME_PROD")
 
+client = MongoClient(MONGO_URI)
+db = client[MONGO_DB_NAME_STAGE]
+models_collection = db["models"]
 
 s3 = boto3.client(
     's3', 
