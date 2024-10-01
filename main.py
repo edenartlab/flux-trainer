@@ -45,6 +45,7 @@ def construct_train_command(config: Dict[str, Any]) -> List[str]:
         "--network_module", "networks.lora_flux",
         "--network_dim", config['lora_rank'],
         "--optimizer_type", "adamw8bit",
+        #"--optimizer_schedulefree_wrapper",
         "--learning_rate", config['learning_rate'],
         "--cache_text_encoder_outputs",
         "--cache_text_encoder_outputs_to_disk",
