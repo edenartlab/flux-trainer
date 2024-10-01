@@ -54,7 +54,7 @@ RUN git clone https://github.com/kohya-ss/sd-scripts.git \
 RUN HF_TOKEN=${HF_TOKEN} python3 download_models.py
 
 # last steps
-RUN apt-get update && apt-get install -y libmagic1
+RUN apt-get update && apt-get install -y libmagic1 zip
 RUN pip install boto3 python-magic
 
 ARG AWS_ACCESS_KEY_ID

@@ -1,12 +1,8 @@
-
-print("FLUX-TRAINER 1")
 import os
 import logging
 import sys
 import argparse
-import boto3
 from pymongo import MongoClient
-from bson import ObjectId
 
 import s3
 from utils import *
@@ -83,15 +79,10 @@ def main():
 
     # Parse the arguments
     args = parser.parse_args()
-    print("ARGS", args)
-    for arg, value in vars(args).items():
-        print(f"{arg}: {value}")
 
-    print(args.dataset_url)
     # Step 1: Download the dataset from the URL provided
     download_dataset([args.dataset_url])
 
-    print(args.config)
     # Step 2: Load the training config from the provided file
     config = construct_config(args.config)
 
@@ -99,7 +90,6 @@ def main():
     config["lora_rank"] = args.lora_rank
     config["learning_rate"] = args.learning_rate
     config["max_train_steps"] = args.max_train_steps
-    print(config)
     
     # Step 3: Preprocess the dataset if required
     if config.get("prep_dataset"):
@@ -127,7 +117,6 @@ def main():
         "name": args.name}
     )
 
-    print("FLUX-TRAINER end")
 
 if __name__ == "__main__":
     main()
