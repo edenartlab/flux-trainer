@@ -60,7 +60,7 @@ def main():
         print(" ========= Config ========== ")
         print(config)
         print(" ========================== ")
-        
+
         # Download the dataset from the URL provided
         lora_training_urls = task_args["lora_training_urls"]
         download_dataset(config["dataset_path"], lora_training_urls)
@@ -97,7 +97,7 @@ def main():
         # make thumbnail and slug
         sample_dir = os.path.join(output_dir, "sample")
         thumbnail_url = eden_utils.create_thumbnail(sample_dir, env=args.env)
-        slug = eden_utils.make_slug(task)
+        # slug = eden_utils.make_slug(task)
 
         # save model
         model_id = eden_utils.models_collection.insert_one({
@@ -108,7 +108,7 @@ def main():
             "public": False,
             "task": task["_id"],
             "thumbnail": thumbnail_url,
-            "slug": slug,
+            # "slug": slug,
             "user": task["user"],
             "createdAt": datetime.utcnow(),
             "updatedAt": datetime.utcnow(),
