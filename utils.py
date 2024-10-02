@@ -53,28 +53,6 @@ def construct_toml(config: Dict[str, Any]) -> Dict[str, Any]:
 
     return config
 
-def create_sample_prompts(config):
-    """
-    Create the sample prompts for evaluation.
-    Replace any occurence of "TOK" with the "caption_prefix" from the config.
-    """
-
-    new_text_lines = []
-
-    # load the source prompts:
-    with open(config['eval_prompts'], 'r') as f:
-        text_lines = f.readlines()
-        for line in text_lines:
-            new_text_lines.append(line.replace("TOK", config["caption_prefix"]))
-
-    # save the new prompts:
-    eval_prompts_path = Path(config["output_dir"]) / "eval_prompts.txt"
-    with open(eval_prompts_path, 'w') as f:
-        f.writelines(new_text_lines)
-
-    config["eval_prompts"] = str(eval_prompts_path)
-    return config
-
 def construct_config(config_path: str) -> Dict[str, Any]:
     """Construct and update the configuration dictionary."""
     try:
@@ -93,8 +71,6 @@ def construct_config(config_path: str) -> Dict[str, Any]:
         
         with open(Path(config["output_dir"]) / "config.json", 'w') as f:
             json.dump(serializable_config, f, indent=4)
-
-        config = create_sample_prompts(config)
 
         return construct_toml(config)
     except Exception as e:
@@ -251,7 +227,7 @@ def prep_dataset(root_directory, hard_prep = True):
     error_dir = os.path.join(os.path.dirname(root_directory), 'error_dataset_files')
     os.makedirs(error_dir, exist_ok=True)
 
-    print("Preparing dataset folder {root_directory}...", flush=True)
+    print(f"Preparing dataset folder {root_directory}...", flush=True)
     total_imgs, resized = 0, 0
 
     for subdir, _, files in os.walk(root_directory):

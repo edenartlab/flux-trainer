@@ -4,6 +4,7 @@ import requests
 from tqdm import tqdm
 import zipfile
 from typing import List
+import uuid
 
 def download_file(url: str, dataset_path: str):
     """
@@ -31,23 +32,25 @@ def download_file(url: str, dataset_path: str):
 
 def unzip_file(file_path: str, extract_to: str):
     """
-    Unzips a zip file using Python's zipfile module.
+    Unzips a zip file, placing all files directly in the extract_to directory with unique names.
     """
     print(f"Unzipping {file_path}...")
     try:
         with zipfile.ZipFile(file_path, 'r') as zip_ref:
-            zip_ref.extractall(extract_to)
+            for file_info in zip_ref.infolist():
+                if file_info.filename[-1] == '/':  # Skip directories
+                    continue
+                file_info.filename = f"{uuid.uuid4()}_{os.path.basename(file_info.filename)}"
+                zip_ref.extract(file_info, extract_to)
         print(f"Unzipped {file_path} successfully.")
     except Exception as e:
         print(f"Error unzipping {file_path}: {e}")
 
-def download_dataset(dataset_urls: List[str]):
+def download_dataset(dataset_path: str, dataset_urls: List[str]):
     """
     Downloads and extracts datasets from the provided URLs.
     """
-    dataset_path = "training_images"
     if os.path.exists(dataset_path):
-        print("DELETED EXISTING FOLDER")
         shutil.rmtree(dataset_path)
     os.makedirs(dataset_path, exist_ok=True)
     
@@ -57,5 +60,5 @@ def download_dataset(dataset_urls: List[str]):
             unzip_file(local_file, dataset_path)
             os.remove(local_file)  # Remove the zip file after extraction
     
-    print("Dataset downloaded:")
+    print(f"Dataset downloaded to {dataset_path}:")
     print(os.listdir(dataset_path))

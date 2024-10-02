@@ -1,17 +1,23 @@
 # Use an official Python runtime as a parent image
-#FROM python:3.10-slim
 FROM nvidia/cuda:11.8.0-runtime-ubuntu22.04
 ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
 # env vars
-ARG HF_TOKEN
-ARG MONGO_URI
-ARG MONGO_DB_NAME_STAGE
+ARG HF_TOKEN \
+    MONGO_URI MONGO_DB_NAME_STAGE MONGO_DB_NAME_PROD \
+    AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_REGION_NAME \
+    AWS_BUCKET_NAME_STAGE AWS_BUCKET_NAME_PROD
 ENV HF_TOKEN=${HF_TOKEN} \
     MONGO_URI=${MONGO_URI} \
-    MONGO_DB_NAME_STAGE=${MONGO_DB_NAME_STAGE}
+    MONGO_DB_NAME_STAGE=${MONGO_DB_NAME_STAGE} \
+    MONGO_DB_NAME_PROD=${MONGO_DB_NAME_PROD} \
+    AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
+    AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
+    AWS_REGION_NAME=${AWS_REGION_NAME} \
+    AWS_BUCKET_NAME_STAGE=${AWS_BUCKET_NAME_STAGE} \
+    AWS_BUCKET_NAME_PROD=${AWS_BUCKET_NAME_PROD}
 
 # install deps
 RUN apt-get update && \
@@ -25,6 +31,8 @@ RUN apt-get update && \
     libglib2.0-0 \
     python3 \
     python3-pip \
+    libmagic1 \
+    zip \
     && rm -rf /var/lib/apt/lists/*
 
 # Set python3 as the default python
@@ -34,12 +42,8 @@ RUN ln -s /usr/bin/python3 /usr/bin/python
 RUN git clone https://github.com/edenartlab/flux-trainer.git
 WORKDIR /app/flux-trainer
 
-# copy download script
-COPY download_models.py /app/flux-trainer/
-
 # install dependencies
-#RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install timm==1.0.9 requests tqdm pymongo huggingface_hub python-dotenv
+RUN pip install timm==1.0.9 requests tqdm pymongo huggingface_hub python-dotenv boto3 python-magic
 RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 
 # clone and setup sd-scripts
@@ -50,29 +54,17 @@ RUN git clone https://github.com/kohya-ss/sd-scripts.git \
     && pip install --no-cache-dir -r requirements.txt \
     && cd ..
 
-# download models from huggingface
+# copy download script and download models from huggingface
+COPY download_models.py /app/flux-trainer/
 RUN HF_TOKEN=${HF_TOKEN} python3 download_models.py
 
-# last steps
-RUN apt-get update && apt-get install -y libmagic1 zip
-RUN pip install boto3 python-magic
-
-ARG AWS_ACCESS_KEY_ID
-ARG AWS_SECRET_ACCESS_KEY
-ARG AWS_REGION_NAME
-ARG AWS_BUCKET_NAME_STAGE
-ARG AWS_BUCKET_NAME_PROD
-ENV AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
-    AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
-    AWS_REGION_NAME=${AWS_REGION_NAME} \
-    AWS_BUCKET_NAME_STAGE=${AWS_BUCKET_NAME_STAGE} \
-    AWS_BUCKET_NAME_PROD=${AWS_BUCKET_NAME_PROD}
-
+# add vision
+ARG OPENAI_API_KEY
+ENV OPENAI_API_KEY=${OPENAI_API_KEY}
+RUN pip install openai
 
 # copy the rest of the files
 COPY . /app/flux-trainer/
 
-
 # Set the default command to python
-ENTRYPOINT ["python3", "main.py", "--config", "template/train_config.json", "--name", "test"]
-# ENTRYPOINT ["python3", "main.py"]
+ENTRYPOINT ["python3", "eden_trainer.py"]
