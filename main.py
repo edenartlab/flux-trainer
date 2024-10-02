@@ -64,14 +64,15 @@ def main():
     parser = argparse.ArgumentParser(description='Training script for flux network.')
    
     # Add arguments for dataset URL and config file
-    parser.add_argument('--dataset_url', default="https://edenartlab-prod-data.s3.us-east-1.amazonaws.com/518db09067455b60bb3fab0561aa6c7466592f9b34bba770fa022cf299bbcd12.zip", help="URL of the dataset to download and train on")
+    parser.add_argument('--dataset_url', default=None, help="URL of the dataset to download and train on")
     parser.add_argument('--config', type=str, default="template/train_config.json", help='Path to the training config file (JSON).')
 
     # Parse the arguments
     args = parser.parse_args()
 
     # Step 1: Download the dataset from the URL provided
-    download_dataset([args.dataset_url])
+    if args.dataset_url:
+        download_dataset([args.dataset_url])
 
     # Step 2: Load the training config from the provided file
     config = construct_config(args.config)
