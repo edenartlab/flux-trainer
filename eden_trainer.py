@@ -66,10 +66,12 @@ def main():
         download_dataset(config["dataset_path"], lora_training_urls)
         
         # Use GPT4v to check if the dataset is a face or style
-        if eden_utils.check_if_face(config["dataset_path"]):
-            config["mode"] = "face"
-        else:
-            config["mode"] = "style"
+        config["mode"] = "style"
+        try:
+            if eden_utils.check_if_face(config["dataset_path"]):
+                config["mode"] = "face"
+        except Exception as e:
+            print("GPT error, assuming mode=style. Error: ", e)
 
         # Preprocess the dataset if required
         if config.get("prep_dataset"):
