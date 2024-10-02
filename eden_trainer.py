@@ -55,6 +55,11 @@ def main():
         config["learning_rate"] = str(task_args["learning_rate"])
         config["seed"] = str(task_args.get("seed", random.randint(0, 2147483648)))
         config["max_train_steps"] = str(task_args["max_train_steps"])
+        config["caption_prefix"] = task_args.get("caption_prefix", config["caption_prefix"])
+        
+        print(" ========= Config ========== ")
+        print(config)
+        print(" ========================== ")
         
         # Download the dataset from the URL provided
         lora_training_urls = task_args["lora_training_urls"]
