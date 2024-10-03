@@ -57,7 +57,7 @@ def main():
         config["max_train_steps"] = str(task_args["max_train_steps"])
         config["caption_prefix"] = task_args.get("caption_prefix", config["caption_prefix"])
         
-        print(" ========= Config ========== ")
+        print(" ========= Config !!! ========== ")
         print(config)
         print(" ========================== ")
 
@@ -83,6 +83,11 @@ def main():
 
         # Step 5: Construct and run the training command
         cmd = construct_train_command(config)
+
+        print(" ========= Config 2 !!! ========== ")
+        print(config)
+        print(" ========================== ")
+
         run_job(cmd, config)
 
         # save the result

@@ -218,7 +218,7 @@ def check_if_face(images_dir):
     image_files = [os.path.join(images_dir, f) for f in image_files if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tiff'))]
     n = min(4, len(image_files))
     selected_images = random.sample(image_files, n)
-    print("selected images to check for face:", selected_images)
+    print("check these images for faces:", selected_images)
 
     class IsFace(BaseModel):
         """

@@ -8,7 +8,8 @@ WORKDIR /app
 ARG HF_TOKEN \
     MONGO_URI MONGO_DB_NAME_STAGE MONGO_DB_NAME_PROD \
     AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_REGION_NAME \
-    AWS_BUCKET_NAME_STAGE AWS_BUCKET_NAME_PROD
+    AWS_BUCKET_NAME_STAGE AWS_BUCKET_NAME_PROD \
+    OPENAI_API_KEY
 ENV HF_TOKEN=${HF_TOKEN} \
     MONGO_URI=${MONGO_URI} \
     MONGO_DB_NAME_STAGE=${MONGO_DB_NAME_STAGE} \
@@ -17,7 +18,8 @@ ENV HF_TOKEN=${HF_TOKEN} \
     AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
     AWS_REGION_NAME=${AWS_REGION_NAME} \
     AWS_BUCKET_NAME_STAGE=${AWS_BUCKET_NAME_STAGE} \
-    AWS_BUCKET_NAME_PROD=${AWS_BUCKET_NAME_PROD}
+    AWS_BUCKET_NAME_PROD=${AWS_BUCKET_NAME_PROD} \
+    OPENAI_API_KEY=${OPENAI_API_KEY}
 
 # install deps
 RUN apt-get update && \
@@ -43,7 +45,7 @@ RUN git clone https://github.com/edenartlab/flux-trainer.git
 WORKDIR /app/flux-trainer
 
 # install dependencies
-RUN pip install timm==1.0.9 requests tqdm pymongo huggingface_hub python-dotenv boto3 python-magic
+RUN pip install timm==1.0.9 requests tqdm pymongo huggingface_hub python-dotenv boto3 python-magic openai
 RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 
 # clone and setup sd-scripts
@@ -57,11 +59,6 @@ RUN git clone https://github.com/kohya-ss/sd-scripts.git \
 # copy download script and download models from huggingface
 COPY download_models.py /app/flux-trainer/
 RUN HF_TOKEN=${HF_TOKEN} python3 download_models.py
-
-# add vision
-ARG OPENAI_API_KEY
-ENV OPENAI_API_KEY=${OPENAI_API_KEY}
-RUN pip install openai
 
 # copy the rest of the files
 COPY . /app/flux-trainer/
