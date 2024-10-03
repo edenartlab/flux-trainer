@@ -70,12 +70,12 @@ def main():
     # Parse the arguments
     args = parser.parse_args()
 
-    # Step 1: Download the dataset from the URL provided
-    if args.dataset_url:
-        download_dataset([args.dataset_url])
-
-    # Step 2: Load the training config from the provided file
+    # Step 1: Load the training config from the provided file
     config = construct_config(args.config)
+
+    # Step 2: Download the dataset from the URL provided
+    if args.dataset_url:
+        download_dataset(config["dataset_path"], [args.dataset_url])
 
     # Step 3: Preprocess the dataset if required
     if config.get("prep_dataset"):

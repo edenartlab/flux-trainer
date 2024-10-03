@@ -49,13 +49,19 @@ def main():
         task_args = task["args"]
         print("task_args", task_args)
 
+        # Override args
+        with open(args.config, 'r') as f:
+            config_json = json.load(f)
+        config_json["lora_rank"] = str(task_args["lora_rank"])
+        config_json["learning_rate"] = str(task_args["learning_rate"])
+        config_json["seed"] = str(task_args.get("seed", random.randint(0, 2147483648)))
+        config_json["max_train_steps"] = str(task_args["max_train_steps"])
+        config_json["caption_prefix"] = task_args.get("caption_prefix", config_json.get("caption_prefix", "TOK"))
+        with open(args.config, 'w') as f:
+            json.dump(config_json, f, indent=2)
+
         # Load the training config from the provided file
         config = construct_config(args.config)
-        config["lora_rank"] = str(task_args["lora_rank"])
-        config["learning_rate"] = str(task_args["learning_rate"])
-        config["seed"] = str(task_args.get("seed", random.randint(0, 2147483648)))
-        config["max_train_steps"] = str(task_args["max_train_steps"])
-        config["caption_prefix"] = task_args.get("caption_prefix", config["caption_prefix"])
         
         print(" ========= Config !!! ========== ")
         print(config)

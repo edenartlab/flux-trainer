@@ -52,7 +52,7 @@ RUN pip install torch torchvision torchaudio --index-url https://download.pytorc
 RUN git clone https://github.com/kohya-ss/sd-scripts.git \
     && cd sd-scripts \
     && git checkout sd3 \
-    && git checkout a2ad7e5644f08141fe053a2b63446d70d777bdcf \
+    && git checkout 8bea039a8d9503a3fe696c445ca992301be1d6fd \
     && pip install --no-cache-dir -r requirements.txt \
     && cd ..
 
