@@ -202,7 +202,9 @@ def make_slug(task):
 
     task_args = task["args"]
     name = task_args["name"].lower().replace(" ", "-")
-    version = 1 + models_collection.count_documents({"name": name, "user": task["user"]}) 
+    existing_docs = list(models_collection.find({"name": name, "user": task["user"]}))
+    versions = [int(doc.get('slug', '').split('/')[-1][1:]) for doc in existing_docs if doc.get('slug')]
+    version = max(versions or [0]) + 1
     username = users_collection.find_one({"_id": task["user"]})["username"]
     slug = f"{username}/{name}/v{version}"
     return slug
