@@ -45,7 +45,7 @@ def download_flux(models_dir):
     # List of models and paths to download
     models_to_download = [
         ('black-forest-labs/FLUX.1-dev', 'ae.safetensors'),
-        ('black-forest-labs/FLUX.1-dev', 'flux1-dev.safetensors'),
+        #('black-forest-labs/FLUX.1-dev', 'flux1-dev.safetensors'),
         ('comfyanonymous/flux_text_encoders', 'clip_l.safetensors'),
         ('comfyanonymous/flux_text_encoders', 't5xxl_fp16.safetensors')
     ]
@@ -54,6 +54,12 @@ def download_flux(models_dir):
     print("Downloading flux...", flush=True)
     for repo, filename in models_to_download:
         os.system(f'huggingface-cli download {repo} {filename} --repo-type model --local-dir {models_dir}')
+
+    # Download the entire flux-dev-de-distill-diffusers repository
+    flux_distill_dir = os.path.join(models_dir, "flux-dev-de-distill-diffusers")
+    os.makedirs(flux_distill_dir, exist_ok=True)
+    print("Downloading flux-dev-de-distill-diffusers repository...", flush=True)
+    os.system(f'huggingface-cli download InstantX/flux-dev-de-distill-diffusers --repo-type model --local-dir "{flux_distill_dir}" --include="*.safetensors" "*.json" "*.yaml"')
 
 
 if __name__ == "__main__":

@@ -54,8 +54,6 @@ If you have all these models already downloaded somewhere else, you can just poi
 4. All the logs, samples and .safetensors files will appear under ./results
 
 
-
-
 ## Building with docker:
 
 `docker build --build-arg HF_TOKEN=your_hf_token -t flux-trainer . `
