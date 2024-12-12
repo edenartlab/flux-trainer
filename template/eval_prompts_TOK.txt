@@ -1,6 +1,6 @@
 TOK walking down the street, New York city, setting sun --w 768 --h 768 --s 20 --d 0
 a painting of a beautiful young TOK with a mustache by Vincent van Gogh, starry night sky and beautiful city in the background --w 768 --h 768 --s 20 --d 2
-a stunning artwork of TOK in the forest, masterpiece --w 768 --h 768 --s 20 --d 3
-a closeup portrait of TOK climbing the summit of Mount Everest --w 1024 --h 1024 --s 30 --d 4
-a close-up of a bare chested TOK riding a giant armored polar bear --w 1024 --h 1024 --s 30 --d 5
+A masterfully composed artwork depicting TOK standing amid an ancient forest of towering redwoods, dappled golden sunlight filtering through the emerald canopy above. His tribal markings and battle-scarred armor blend with the organic patterns of moss-covered trees, while luminous forest spirits dance ethereally in the misty background, creating an enchanted atmosphere. --w 768 --h 768 --s 20 --d 3
+A dramatic close-up candid photo of TOK nearing Mount Everest's summit, weathered by extreme conditions and illuminated by the golden alpenglow. Ice crystals clinging while his determined eyes pierce through swirling snow. Oxygen mask hangs at his neck, prayer flags flutter in the background against the azure sky. --w 1024 --h 1024 --s 30 --d 4
+A dramatic close-up portrait of TOK, a weathered warrior with tribal tattoos across his bare muscular chest, riding astride a colossal polar bear fitted with intricate steampunk armor plating. Snow crystals glisten as he grips the bear's metallic reins, his determined gaze fixed on an unseen threat ahead. --w 1024 --h 1024 --s 30 --d 5
 a depication of TOK as a lego figure --w 1024 --h 1024 --s 30 --d 5

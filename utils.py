@@ -63,7 +63,14 @@ def create_sample_prompts(config):
     with open(config['eval_prompts'], 'r') as f:
         text_lines = f.readlines()
         for line in text_lines:
-            new_text_lines.append(line.replace("TOK", config["caption_prefix"]))
+            prompt = line
+            if config["caption_prefix"]:
+                if "TOK" in prompt:
+                    prompt = prompt.replace("TOK", config["caption_prefix"])
+                else:
+                    prompt = config["caption_prefix"] + " " + prompt
+            new_text_lines.append(prompt)
+            
     # save the new prompts:
     eval_prompts_path = Path(config["output_dir"]) / "eval_prompts.txt"
     with open(eval_prompts_path, 'w') as f:
