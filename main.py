@@ -66,7 +66,8 @@ def construct_train_command(config: Dict[str, Any]) -> List[str]:
             "--model_prediction_type", "raw",
             "--guidance_scale", "1.0"
         ]
-    else:
+    else: # LoRA
+        
         cmd = [
             "accelerate", "launch",
             "--mixed_precision", "bf16",
@@ -92,9 +93,9 @@ def construct_train_command(config: Dict[str, Any]) -> List[str]:
             "--network_dim", config['lora_rank'],
             "--optimizer_type", "adamw8bit",
             "--learning_rate", config['learning_rate'],
-            "--lr_scheduler", "cosine",
+            #"--lr_scheduler", "cosine",
+            "--lr_scheduler", "constant_with_warmup",
             "--cache_latents_to_disk",
-            #"--cache_text_encoder_outputs",
             "--cache_text_encoder_outputs_to_disk",
             "--max_grad_norm", "0.0", 
             "--text_encoder_batch_size", "4",
@@ -139,6 +140,7 @@ def main():
 
     # Step 4: Perform dataset captioning if enabled in the config
     if config.get("caption_mode"):
+        # <CAPTION>, <DETAILED_CAPTION>, <MORE_DETAILED_CAPTION>
         florence_caption_dataset(config["dataset_path"], caption_mode=config["caption_mode"])
 
     # Step 5: Construct and run the training command

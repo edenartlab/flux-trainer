@@ -1,0 +1,23 @@
+{
+    "dataset_path": "/data/xander/Projects/cog/GitHub_repos/flux-trainer/datasets/Verdelis_small_orig_plus",
+    "caption_mode": "<CAPTION>",
+    "prep_dataset": true,
+    "mode": "object",
+    "caption_prefix": "my_new_concept_or_style", 
+    "caption_suffix": "",
+    "dataset_toml": "template/dataset_template_512.toml",
+    "eval_prompts": "template/eval_prompts_TOK.txt",
+
+    "full_finetune": false,
+    "lora_rank": "4",
+    "learning_rate": "3.0e-4",
+    "max_train_steps": "2500",
+    "save_every_n_steps": "500",
+    "sample_every_n_steps": "500",
+    "seed": "42",
+
+    "MODEL_PATH": "models/flux-dev-de-distill-diffusers",
+    "CLIP_L_PATH": "models/clip_l.safetensors",
+    "T5XXL_PATH": "models/t5xxl_fp16.safetensors",
+    "AE_PATH": "models/ae.safetensors"
+}
