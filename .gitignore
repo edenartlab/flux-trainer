@@ -1,6 +1,7 @@
 .env
 sd-scripts/
 nohup.out
+datasets/
 *log*.txt
 results
 models
