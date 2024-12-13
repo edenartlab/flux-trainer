@@ -3,7 +3,7 @@
     "caption_mode": "<DETAILED_CAPTION>",
     "prep_dataset": true,
     "mode": "object",
-    "caption_prefix": "my_new_concept_or_style", 
+    "caption_prefix": "verdelis, the ethereal digital with a ceramic body made from porcelain", 
     "caption_suffix": "",
     "dataset_toml": "template/dataset_template_512.toml",
     "eval_prompts": "template/eval_prompts_TOK.txt",

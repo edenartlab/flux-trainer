@@ -5,6 +5,7 @@ datasets/
 *log*.txt
 results
 models
+*.log
 test
 __pycache__/
 error_dataset_files

@@ -84,7 +84,7 @@ def download_flux(models_dir):
     if not success:
         raise RuntimeError("Failed to download flux-dev-de-distill-diffusers files")
     
-    print(f"Successfully downloaded {len(safetensor_files)} .safetensors files to {flux_distill_dir}!", flush=True)
+    print(f"Successfully downloaded .safetensors files to {flux_distill_dir}!", flush=True)
 
 if __name__ == "__main__":
     models_dir = "./models"
