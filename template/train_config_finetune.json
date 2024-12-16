@@ -1,6 +1,6 @@
 {
     "dataset_path": "/data/xander/Projects/cog/GitHub_repos/flux-trainer/datasets/Verdelis_small_orig_plus",
-    "caption_mode": "<DETAILED_CAPTION>",
+    "caption_mode": null,
     "prep_dataset": true,
     "mode": "object",
     "caption_prefix": "verdelis, the ethereal digital with a ceramic body made from porcelain", 
