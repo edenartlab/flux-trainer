@@ -23,7 +23,7 @@ def construct_train_command(config: Dict[str, Any]) -> List[str]:
 
         cmd = [
             "accelerate", "launch",
-            "--mixed_precision bf16",
+            "--mixed_precision", "bf16",
             "--num_cpu_threads_per_process", "1",
             "--num_processes", "1",  # run on 1 gpu, remove this line for multi-gpu training
             str(root_dir / "sd-scripts" / "flux_train.py"),
@@ -47,8 +47,8 @@ def construct_train_command(config: Dict[str, Any]) -> List[str]:
             "--blocks_to_swap", "8", 
             "--full_bf16", 
             "--learning_rate", config['learning_rate'],
-            "--lr_scheduler", "cosine",
-            #"--lr_scheduler", "constant_with_warmup",
+            #"--lr_scheduler", "cosine",
+            "--lr_scheduler", "constant_with_warmup",
             #"--cache_text_encoder_outputs",
             "--cache_text_encoder_outputs_to_disk",
             "--max_grad_norm", "0.0", 
