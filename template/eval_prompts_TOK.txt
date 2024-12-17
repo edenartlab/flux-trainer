@@ -1,31 +1,9 @@
-TOK walking down the street, New York city, setting sun
-a painting of a beautiful young TOK with a mustache by Vincent van Gogh, starry night sky and beautiful city in the background
-A masterfully composed artwork depicting TOK standing amid an ancient forest of towering redwoods, dappled golden sunlight filtering through the emerald canopy above. His tribal markings and battle-scarred armor blend with the organic patterns of moss-covered trees, while luminous forest spirits dance ethereally in the misty background, creating an enchanted atmosphere.
-A dramatic close-up candid photo of TOK nearing Mount Everest's summit, weathered by extreme conditions and illuminated by the golden alpenglow. Ice crystals clinging while his determined eyes pierce through swirling snow. Oxygen mask hangs at his neck, prayer flags flutter in the background against the azure sky.
-A dramatic close-up portrait of TOK, a weathered warrior with tribal tattoos across his bare muscular chest, riding astride a colossal polar bear fitted with intricate steampunk armor plating. Snow crystals glisten as he grips the bear's metallic reins, his determined gaze fixed on an unseen threat ahead.
-a depication of TOK as a lego figure
-Inside a vast Martian biodome near Olympus Mons, TOK hovers between crystalline archways draped with bioluminescent vines. Their plant-like form casts shifting shadows as they contemplate and talk about the ancient dance of symbiosis.
-In their memory garden, TOK tends to flowers containing preserved human dreams. Each blossom holds a different emotion - joy, sorrow, hope. Their tentacles gently prune branches that weep holographic tears, while they whisper ancient Earth lullabies.
-TOK studies a wall of living paintings inspired by Hieronymus Bosch's 'Garden of Earthly Delights.' Each frame contains miniature evolving ecosystems where plants and creatures merge in harmonious new forms. Their reflection fragments across the organic crystal surfaces.
-Deep in the biodome's meditation chamber, TOK floats in a sphere of light, communing with the collective consciousness of their hybrid plants. Fibonacci spirals of energy connect them to each organism as they share nutrients and memories through a network of glowing mycorrhizal threads.
-During a dust storm, TOK shelters fragile seedlings in a nursery made of living crystal. They sing to the plants in samba rhythm while projecting memories of Earth's rainforests onto the dome walls, teaching the new species about their heritage.
-At the biodome's heart, TOK orchestrates a dance of symbiosis. Microscopic view shows plant cells joining with bacterial partners while TOK guides their evolution with gentle gestures, like a conductor leading an invisible orchestra.
-TOK explores their archives - shelves of crystalline seeds containing Earth's lost species. Each seed holds not just DNA but the complete memory of extinct ecosystems. Their form ripples with sadness as they encounter specimens that will never bloom again.
-In a zero-gravity garden chamber, TOK weaves strands of bioluminescent algae into new patterns, creating three-dimensional mandalas that pulse with life. The living artwork responds to their emotions, shifting between forms inspired by sacred geometry.
-TOK stands before a wall of environmental sensors, monitoring the vital signs of their biodome's ecosystem. Holographic displays show the intricate web of relationships between species. They make minute adjustments to maintain perfect harmony.
-During the Martian sunset, TOK performs a ritual of remembrance. They release spores that form constellations in the dome's atmosphere, each light point containing memories of Earth's great forests. The patterns tell stories of ancient tree spirits.
-TOK meets with other Little Martians in a dream council. Their forms merge with the architecture as they debate the ethics of terraforming. Living murals behind them shift to illustrate their arguments about balance between progress and preservation.
-TOK on the cover of Vogue Magazine, super high fashion, elegant pose, luxurious design, glossy magazine cover, cartoon style
-TOK checking his computer while chilling at the beach, sunny day, ocean waves, relaxed atmosphere, cartoon style
-TOK speeding away in a Formula 1 racecar, crossing the finish line, high-speed action, dynamic motion blur, vibrant colors, cartoon style
-a team of buff TOK gladiators protecting the castle, epic, heroic, detailed, vibrant colors
-A portrait of TOK, the anthropomorphic banana, with a tech-savvy look and Southern California style dreadlocks, ready for a San Diego adventure, passport photo style with a smart and relaxed vibe.
-TOK doing squats at the gym, with a determined expression, surrounded by gym equipment and weights
-TOK, an anthropomorphic banana, in bed asleep with his eyes closed, peaceful and restful atmosphere, cinematic style, nighttime
-TOK, an anthropomorphic banana, cheerfully cooking in a kitchen, styled like a professional cooking show, photo realistic, bright and inviting atmosphere
-A photo of TOK casually leaning against a graffiti wall, looking cool and approachable, with a skateboard and streetwear fashion.
-A photo of TOK at a beach sunset, playing an acoustic guitar, giving off a relaxed and artistic vibe.
-A photo of TOK in a chef's hat, cooking in a modern kitchen, looking skilled and passionate about cuisine.
-A photo of TOK surrounded by books in a cozy library, looking intellectual and deep in thought
-A photo of TOK looking suave and sophisticated, wearing a tuxedo, with a charming smile, in a classy bar setting.
-A hyperrealistic rendering of TOK, an anthropomorphic banana with a distinct non-monkey face, in a business board meeting surrounded by executive business monkeys, wearing a suit, professional, serious atmosphere, high detail, 4k resolution
+a painting of a beautiful young TOK with a mustache by Vincent van Gogh, starry night sky and beautiful city in the background --w 768 --h 768 --s 20 --d 4
+A dramatic close-up candid photo of TOK nearing Mount Everest's summit, weathered by extreme conditions and illuminated by the golden alpenglow. Ice crystals clinging while his determined eyes pierce through swirling snow. Oxygen mask hangs at his neck, prayer flags flutter in the background against the azure sky. --w 768 --h 768 --s 20 --d 4
+a depication of TOK as a lego figure --w 768 --h 768 --s 20 --d 4
+TOK on the cover of Vogue Magazine, super high fashion, elegant pose, luxurious design, glossy magazine cover, cartoon style --w 768 --h 768 --s 20 --d 4
+TOK checking his computer while chilling at the beach, sunny day, ocean waves, relaxed atmosphere, cartoon style --w 768 --h 768 --s 20 --d 4
+TOK speeding away in a Formula 1 racecar, crossing the finish line, high-speed action, dynamic motion blur, vibrant colors, cartoon style --w 768 --h 768 --s 20 --d 4
+a team of buff TOK gladiators protecting the castle, epic, heroic, detailed, vibrant colors --w 768 --h 768 --s 20 --d 4
+TOK doing squats at the gym, with a determined expression, surrounded by gym equipment and weights --w 768 --h 768 --s 20 --d 4
+A photo of TOK at a beach sunset, playing an acoustic guitar, giving off a relaxed and artistic vibe. --w 768 --h 768 --s 20 --d 4
