@@ -251,8 +251,8 @@ def load_image_with_orientation(path, mode="RGB"):
     # Convert to the desired mode
     return image.convert(mode)
 
-def prep_dataset(conifg, hard_prep = True):
-    root_directory = conifg["dataset_path"]
+def prep_dataset(config, hard_prep = True):
+    root_directory = config["dataset_path"]
 
     new_data_dir = os.path.join(config["output_dir"], "dataset")
     error_dir    = os.path.join(new_data_dir, 'error_files')

@@ -15,10 +15,10 @@ def hamming_distance(dict1, dict2):
     return distance
 
 # Setup the base experiment config
-exp_name = "flux_training"
+exp_name = "banny"
 output_dir = "results_grid"
 n_exp = 100  # how many random experiment settings to generate
-min_hamming_distance = 4  # min params that have to be different from previous experiments
+min_hamming_distance = 3  # min params that have to be different from previous experiments
 nohup = True
 output_sh_path = f"gridsearch_configs/{exp_name}.sh"
 
@@ -27,25 +27,24 @@ output_sh_path = f"gridsearch_configs/{exp_name}.sh"
 hyperparameters = {
     "dataset_path": [
         "/data/xander/Projects/cog/GitHub_repos/flux-trainer/datasets/bannyv2",
-        "/data/xander/Projects/cog/GitHub_repos/flux-trainer/datasets/banny_small"
+        #"/data/xander/Projects/cog/GitHub_repos/flux-trainer/datasets/banny_small"
     ],
     "caption_mode": [None, "<CAPTION>"],
     "prep_dataset": [True],  # Keeping this constant
     "mode": ["object"],
     "caption_prefix": [
-        "Bnnycrtnman",
         "Banny, the yellow cartoon bananaman"
     ],
     "caption_suffix": [""],  # Keeping this constant
     "dataset_toml": [
         "template/dataset_template_512_bs1.toml",
         "template/dataset_template_512_bs2.toml",
-        "template/dataset_template_1024_bs1.toml",
+        #"template/dataset_template_1024_bs1.toml",
         #"template/dataset_template_1024_bs2.toml",
     ],
     "eval_prompts": ["template/eval_prompts_TOK.txt"],  # Keeping this constant
     "full_finetune": [False],
-    "lora_rank": ["4", "8", "16"],
+    "lora_rank": ["4", "8"],
     "learning_rate": ["1.0e-4", "3e-4"],
     "max_train_steps": ["3000"],
     "save_every_n_steps": ["1000"],
@@ -53,7 +52,7 @@ hyperparameters = {
     "seed": ["42"],  # Keeping this constant
     "MODEL_PATH": [
         "models/flux-dev-de-distill-diffusers",
-        "models/flux1-dev.safetensors"
+        #"models/flux1-dev.safetensors"
     ],
     "CLIP_L_PATH": ["models/clip_l.safetensors"], 
     "T5XXL_PATH": ["models/t5xxl_fp16.safetensors"],
