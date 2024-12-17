@@ -35,6 +35,7 @@ def construct_train_command(config: Dict[str, Any]) -> List[str]:
             "--cache_latents_to_disk",
             "--save_model_as", "safetensors",
             "--sdpa",
+            "--alpha_mask" if config["alpha_mask"] else "",
             "--persistent_data_loader_workers",
             "--max_data_loader_n_workers", "2",
             "--seed", config['seed'],
@@ -81,6 +82,7 @@ def construct_train_command(config: Dict[str, Any]) -> List[str]:
             "--ae", config['AE_PATH'],
             "--save_model_as", "safetensors",
             "--sdpa",
+            "--alpha_mask" if config["alpha_mask"] else "",
             "--persistent_data_loader_workers",
             "--max_data_loader_n_workers", "2",
             "--seed", config['seed'],
@@ -117,16 +119,7 @@ def construct_train_command(config: Dict[str, Any]) -> List[str]:
 
     return cmd
 
-def main():
-    parser = argparse.ArgumentParser(description='Training script for flux network.')
-   
-    # Add arguments for dataset URL and config file
-    parser.add_argument('--dataset_url', default=None, help="URL of the dataset to download and train on")
-    parser.add_argument('--config', type=str, default="template/train_config.json", help='Path to the training config file (JSON).')
-
-    # Parse the arguments
-    args = parser.parse_args()
-
+def run_trainer(args, verbose = True):
     # Step 1: Load the training config from the provided file
     config = construct_config(args.config)
 
@@ -145,8 +138,23 @@ def main():
 
     # Step 5: Construct and run the training command
     cmd = construct_train_command(config)
+
+    if verbose:
+        print(" ========= Final Train Config: ==========")
+        print(config)
+
     run_job(cmd, config)
 
+def main():
+    parser = argparse.ArgumentParser(description='Training script for flux network.')
+   
+    # Add arguments for dataset URL and config file
+    parser.add_argument('--dataset_url', default=None, help="URL of the dataset to download and train on")
+    parser.add_argument('--config', type=str, default="template/train_config.json", help='Path to the training config file (JSON).')
+
+    # Parse the arguments
+    args = parser.parse_args()
+    run_trainer(args)
 
 if __name__ == "__main__":
     main()

@@ -4,15 +4,15 @@ import random
 import toml
 import subprocess
 import logging
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Union, Literal
 from tqdm import tqdm
 from datetime import datetime
 import torch
 import gc
 from PIL import Image
 import shutil
-
 from pathlib import Path
+
 def path_to_str(obj: Any) -> Any:
     """Convert Path objects to strings."""
     if isinstance(obj, Path):
@@ -22,6 +22,32 @@ def path_to_str(obj: Any) -> Any:
     elif isinstance(obj, list):
         return [path_to_str(v) for v in obj]
     return obj
+
+def activate_masks(toml_path: str, conditioning_data_dir: str) -> None:
+    """
+    Add conditioning_data_dir to each subset in the TOML configuration file.
+    
+    Args:
+        toml_path: Path to the TOML file
+        conditioning_data_dir: Path to the conditioning data directory
+    """
+    # Load the TOML file
+    with open(toml_path, 'r') as file:
+        toml_data = toml.load(file)
+    
+    # Check if datasets exist in the TOML file
+    if 'datasets' in toml_data:
+        for dataset in toml_data['datasets']:
+            if 'subsets' in dataset:
+                for subset in dataset['subsets']:
+                    # Add conditioning_data_dir right after image_dir
+                    subset['conditioning_data_dir'] = conditioning_data_dir
+        
+        logging.info(f"Added conditioning_data_dir to all subsets: {conditioning_data_dir}")
+    
+    # Save the modified TOML file
+    with open(toml_path, 'w') as file:
+        toml.dump(toml_data, file)
 
 def construct_toml(config: Dict[str, Any]) -> Dict[str, Any]:
     """Construct and update the TOML configuration file."""
@@ -251,11 +277,85 @@ def load_image_with_orientation(path, mode="RGB"):
     # Convert to the desired mode
     return image.convert(mode)
 
+
+from transformers import (
+    CLIPSegForImageSegmentation,
+    CLIPSegProcessor
+)
+
+@torch.no_grad()
+@torch.cuda.amp.autocast()
+def clipseg_mask_generator(
+    images: List[Image.Image],
+    target_prompts: Union[List[str], str],
+    model_id: Literal[
+        "CIDAS/clipseg-rd64-refined", "CIDAS/clipseg-rd16"
+    ] = "CIDAS/clipseg-rd64-refined",
+    device=torch.device("cuda" if torch.cuda.is_available() else "cpu"),
+    bias: float = 0.01,
+    temp: float = 1.0,
+    **kwargs,
+) -> List[Image.Image]:
+    """
+    Returns a greyscale mask for each image based on the target_prompt.
+    """
+
+    if isinstance(target_prompts, str):
+        print(f'Using "{target_prompts}" as CLIP-segmentation prompt for all images.')
+        target_prompts = [target_prompts] * len(images)
+
+    model = None
+    if any(target_prompts):
+        processor = CLIPSegProcessor.from_pretrained(model_id) #, cache_dir = model_paths.get_path("CLIP"))
+        model = CLIPSegForImageSegmentation.from_pretrained(model_id) #, cache_dir = model_paths.get_path("CLIP")
+        model = model.to(device)
+
+    masks = []
+
+    for image, prompt in tqdm(zip(images, target_prompts)):
+        original_size = image.size
+
+        if prompt != "":
+            inputs = processor(
+                text=[prompt, ""],
+                images=[image] * 2,
+                padding="max_length",
+                truncation=True,
+                return_tensors="pt",
+            ).to(device)
+
+            outputs = model(**inputs)
+
+            logits = outputs.logits
+            probs = torch.nn.functional.softmax(logits / temp, dim=0)[0]
+            probs = (probs + bias).clamp_(0, 1)
+            probs = 255 * probs / probs.max()
+
+            # make mask greyscale
+            mask = Image.fromarray(probs.cpu().numpy()).convert("L")
+
+            # resize mask to original size
+            mask = mask.resize(original_size)
+        else:
+            mask = Image.new("L", original_size, 255)
+
+        masks.append(mask)
+
+    # cleanup
+    del model
+    gc.collect()
+    torch.cuda.empty_cache()
+
+    return masks
+
+
 def prep_dataset(config, hard_prep = True):
     root_directory = config["dataset_path"]
 
-    new_data_dir = os.path.join(config["output_dir"], "dataset")
-    error_dir    = os.path.join(new_data_dir, 'error_files')
+    new_data_root_dir = os.path.join(config["output_dir"], "dataset")
+    new_data_dir = os.path.join(new_data_root_dir, "images")
+    error_dir    = os.path.join(new_data_root_dir, "error_files")
+    os.makedirs(new_data_root_dir, exist_ok=True)
     os.makedirs(new_data_dir, exist_ok=True)
     os.makedirs(error_dir, exist_ok=True)
 
@@ -288,9 +388,40 @@ def prep_dataset(config, hard_prep = True):
                 shutil.copy(file_path, os.path.join(error_dir, file))
 
     print(f"{total_imgs} imgs from {root_directory} converted to .jpg and saved to {new_data_dir}. Resized {resized} images.", flush=True)
-    conifg["dataset_path"] = new_data_dir
+    config["dataset_path"] = new_data_dir
 
-    return conifg
+    if config["masking_prompt"]:
+        # load all images from new_data_dir:
+        img_filepaths = sorted([os.path.join(new_data_dir, f) for f in os.listdir(new_data_dir) if f.endswith('.jpg')])
+        images = [Image.open(f) for f in img_filepaths]
+        print(f"Generating CLIPSeg masks for {len(images)} images...", flush=True)
+        masks = clipseg_mask_generator(images, config["masking_prompt"])
+
+        # save these masks to a new directory:
+        mask_dir = os.path.join(new_data_root_dir, "masks")
+        os.makedirs(mask_dir, exist_ok=True)
+
+        for i, mask in enumerate(masks):
+            mask.save(os.path.join(mask_dir, os.path.basename(img_filepaths[i])))
+
+        """
+        # Add a line to the dataset config to activate the masks:
+        config["conditioning_data_dir"] = mask_dir
+        toml_path = config["dataset_config"]
+        activate_masks(toml_path, mask_dir)
+        """
+
+        # Now, iterate over the images, add the corresponding mask as alpha channel and save the resulting image as png (overwriting the jpg):
+        for i, img in enumerate(images):
+            img.putalpha(masks[i])
+            img.save(img_filepaths[i].replace('.jpg', '.png'), 'PNG')
+            os.remove(img_filepaths[i])
+
+        config["alpha_mask"] = True
+    else:
+        config["alpha_mask"] = False
+
+    return config
 
 if __name__ == "__main__":
     folder_path = "test_imgs"

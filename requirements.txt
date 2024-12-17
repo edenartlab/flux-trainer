@@ -3,4 +3,5 @@ requests
 tqdm
 pymongo
 huggingface_hub
+transformers
 python-dotenv

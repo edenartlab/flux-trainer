@@ -3,9 +3,10 @@
     "caption_mode": null,
     "prep_dataset": true,
     "mode": "style",
+    "masking_prompt": "",
     "caption_prefix": "my_new_concept_or_style", 
     "caption_suffix": "",
-    "dataset_toml": "template/dataset_template_512.toml",
+    "dataset_toml": "template/dataset_template_512_bs2.toml",
     "eval_prompts": "template/eval_prompts_TOK.txt",
 
     "full_finetune": false,
