@@ -23,32 +23,6 @@ def path_to_str(obj: Any) -> Any:
         return [path_to_str(v) for v in obj]
     return obj
 
-def activate_masks(toml_path: str, conditioning_data_dir: str) -> None:
-    """
-    Add conditioning_data_dir to each subset in the TOML configuration file.
-    
-    Args:
-        toml_path: Path to the TOML file
-        conditioning_data_dir: Path to the conditioning data directory
-    """
-    # Load the TOML file
-    with open(toml_path, 'r') as file:
-        toml_data = toml.load(file)
-    
-    # Check if datasets exist in the TOML file
-    if 'datasets' in toml_data:
-        for dataset in toml_data['datasets']:
-            if 'subsets' in dataset:
-                for subset in dataset['subsets']:
-                    # Add conditioning_data_dir right after image_dir
-                    subset['conditioning_data_dir'] = conditioning_data_dir
-        
-        logging.info(f"Added conditioning_data_dir to all subsets: {conditioning_data_dir}")
-    
-    # Save the modified TOML file
-    with open(toml_path, 'w') as file:
-        toml.dump(toml_data, file)
-
 def construct_toml(config: Dict[str, Any]) -> Dict[str, Any]:
     """Construct and update the TOML configuration file."""
 
@@ -403,13 +377,6 @@ def prep_dataset(config, hard_prep = True):
 
         for i, mask in enumerate(masks):
             mask.save(os.path.join(mask_dir, os.path.basename(img_filepaths[i])))
-
-        """
-        # Add a line to the dataset config to activate the masks:
-        config["conditioning_data_dir"] = mask_dir
-        toml_path = config["dataset_config"]
-        activate_masks(toml_path, mask_dir)
-        """
 
         # Now, iterate over the images, add the corresponding mask as alpha channel and save the resulting image as png (overwriting the jpg):
         for i, img in enumerate(images):
