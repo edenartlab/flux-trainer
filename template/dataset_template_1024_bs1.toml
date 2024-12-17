@@ -8,9 +8,9 @@ caption_extension = ".txt"
 [[datasets]]
 batch_size = 1
 enable_bucket = true
-resolution = 512
-min_bucket_reso = 256
-max_bucket_reso = 1024
+resolution = 1024
+min_bucket_reso = 512
+max_bucket_reso = 2048
 bucket_reso_steps = 64
 
   [[datasets.subsets]]

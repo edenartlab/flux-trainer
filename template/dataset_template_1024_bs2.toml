@@ -10,7 +10,7 @@ batch_size = 2
 enable_bucket = true
 resolution = 1024
 min_bucket_reso = 512
-max_bucket_reso = 1536
+max_bucket_reso = 2048
 bucket_reso_steps = 64
 
   [[datasets.subsets]]
