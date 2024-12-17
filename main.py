@@ -136,7 +136,7 @@ def main():
 
     # Step 3: Preprocess the dataset if required
     if config.get("prep_dataset"):
-        prep_dataset(config["dataset_path"], hard_prep=True)
+        config = prep_dataset(config, hard_prep=True)
 
     # Step 4: Perform dataset captioning if enabled in the config
     if config.get("caption_mode"):

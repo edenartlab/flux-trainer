@@ -251,21 +251,26 @@ def load_image_with_orientation(path, mode="RGB"):
     # Convert to the desired mode
     return image.convert(mode)
 
-def prep_dataset(root_directory, hard_prep = True):
-    error_dir = os.path.join(os.path.dirname(root_directory), 'error_dataset_files')
+def prep_dataset(conifg, hard_prep = True):
+    root_directory = conifg["dataset_path"]
+
+    new_data_dir = os.path.join(config["output_dir"], "dataset")
+    error_dir    = os.path.join(new_data_dir, 'error_files')
+    os.makedirs(new_data_dir, exist_ok=True)
     os.makedirs(error_dir, exist_ok=True)
 
-    print(f"Preparing dataset folder {root_directory}...", flush=True)
+    print(f"Preparing dataset from {root_directory}...", flush=True)
     total_imgs, resized = 0, 0
 
     for subdir, _, files in os.walk(root_directory):
         for file in files:
             file_path = os.path.join(subdir, file)
 
-            if (not hard_prep) and file_path.lower().endswith(('.txt', '.npz')):
+            if file_path.lower().endswith('.txt'): # just copy any .txt files
+                shutil.copy(file_path, os.path.join(new_data_dir, file))
                 continue
 
-            try:
+            try: # check if the file can be loaded as an img:
                 img = load_image_with_orientation(file_path, mode="RGB")
                 
                 if max(img.width, img.height) > 2048:
@@ -275,20 +280,17 @@ def prep_dataset(root_directory, hard_prep = True):
                 
                 # Save the image as .jpg
                 new_filename = os.path.splitext(file)[0] + '.jpg'
-                new_file_path = os.path.join(subdir, new_filename)
+                new_file_path = os.path.join(new_data_dir, new_filename)
                 img.save(new_file_path, 'JPEG', quality=95)
                 total_imgs += 1
-                
-                # Delete the original file if it was different from the new one:
-                if new_file_path != file_path:
-                    os.remove(file_path)
 
-            except Exception as e:
-                # If there was any error, move the file to the errors directory
-                print(f"Error preparing img: {e}", flush=True)
-                shutil.move(file_path, os.path.join(error_dir, file))
+            except Exception as e: # If there was any error, copy the file to the errors directory
+                shutil.copy(file_path, os.path.join(error_dir, file))
 
-    print(f"{total_imgs} imgs in {root_directory} converted to .jpg Resized {resized} images.", flush=True)
+    print(f"{total_imgs} imgs from {root_directory} converted to .jpg and saved to {new_data_dir}. Resized {resized} images.", flush=True)
+    conifg["dataset_path"] = new_data_dir
+
+    return conifg
 
 if __name__ == "__main__":
     folder_path = "test_imgs"
