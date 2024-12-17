@@ -3,6 +3,7 @@
     "caption_mode": null,
     "prep_dataset": true,
     "mode": "object",
+    "masking_prompt": "",
     "caption_prefix": "Banny, the yellow cartoon bananaman", 
     "caption_suffix": "",
     "dataset_toml": "template/dataset_template_512_bs2.toml",
