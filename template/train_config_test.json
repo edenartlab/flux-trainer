@@ -1,5 +1,5 @@
 {
-    "dataset_path": "/data/xander/Projects/cog/GitHub_repos/flux-trainer/datasets/bannyv2",
+    "dataset_path": "/data/xander/Projects/cog/GitHub_repos/flux-trainer/datasets/banny",
     "caption_mode": null,
     "mode": "object",
     "masking_prompt": "TOK",

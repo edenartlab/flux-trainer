@@ -26,8 +26,8 @@ output_sh_path = f"gridsearch_configs/{exp_name}.sh"
 # Define training hyperparameters and their possible values
 hyperparameters = {
     "dataset_path": [
-        "/data/xander/Projects/cog/GitHub_repos/flux-trainer/datasets/bannyv2",
-        #"/data/xander/Projects/cog/GitHub_repos/flux-trainer/datasets/banny_small"
+        "/data/xander/Projects/cog/GitHub_repos/flux-trainer/datasets/banny",
+        "/data/xander/Projects/cog/GitHub_repos/flux-trainer/datasets/banny_all"
     ],
     "caption_mode": [None],
     "mode": ["object"],
