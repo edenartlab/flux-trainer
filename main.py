@@ -133,11 +133,6 @@ def run_trainer(args, verbose = True):
 
     config = prep_dataset(config) 
 
-    # Step 4: Perform dataset captioning if enabled in the config
-    if config.get("caption_mode"):
-        # <CAPTION>, <DETAILED_CAPTION>, <MORE_DETAILED_CAPTION>
-        florence_caption_dataset(config["dataset_path"], caption_mode=config["caption_mode"])
-
     # Step 5: Construct and run the training command
     cmd = construct_train_command(config)
 

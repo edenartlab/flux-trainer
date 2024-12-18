@@ -59,7 +59,6 @@ def main():
         config_json["caption_prefix"] = task_args.get("caption_prefix", config_json.get("caption_prefix", "TOK"))
         with open("tmp_train_config.json", 'w') as f:
             json.dump(config_json, f, indent=2)
-        
 
         # Load the training config from the provided file
         config = construct_config("tmp_train_config.json")
@@ -78,10 +77,6 @@ def main():
 
         # Preprocess the dataset:
         config = prep_dataset(config)
-
-        # Perform dataset captioning if enabled in the config
-        if config.get("caption_mode"):
-            florence_caption_dataset(config["dataset_path"], caption_mode=config["caption_mode"])
 
         # Step 5: Construct and run the training command
         cmd = construct_train_command(config)

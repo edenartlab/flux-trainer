@@ -361,8 +361,11 @@ def prep_dataset(config):
                 shutil.copy(file_path, os.path.join(error_dir, file))
 
     print(f"{total_imgs} imgs from {root_directory} converted to .jpg and saved to {new_data_dir}. Resized {resized} images.", flush=True)
-    
     config["dataset_path"] = new_data_dir
+
+    # Perform dataset captioning if enabled in the config
+    if config.get("caption_mode"):
+            florence_caption_dataset(config["dataset_path"], caption_mode=config["caption_mode"])
     
     if (not config.get("caption_prefix") or not config.get("masking_prompt")) and config["mode"] != "style":
         gpt_caption_prefix, gpt_masking_prompt = describe_image_concept(new_data_dir)
