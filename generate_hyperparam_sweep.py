@@ -29,12 +29,10 @@ hyperparameters = {
         "/data/xander/Projects/cog/GitHub_repos/flux-trainer/datasets/bannyv2",
         #"/data/xander/Projects/cog/GitHub_repos/flux-trainer/datasets/banny_small"
     ],
-    "caption_mode": [None, "<CAPTION>"],
-    "prep_dataset": [True],  # Keeping this constant
+    "caption_mode": [None],
     "mode": ["object"],
-    "caption_prefix": [
-        "Banny, the yellow cartoon bananaman"
-    ],
+    "masking_prompt": ["TOK"],
+    "caption_prefix": ["TOK"],
     "caption_suffix": [""],  # Keeping this constant
     "dataset_toml": [
         "template/dataset_template_512_bs1.toml",

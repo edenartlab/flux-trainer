@@ -1,7 +1,6 @@
 {
     "dataset_path": "/home/rednax/Documents/datasets/00_FLUXING/banny_all",
     "caption_mode": null,
-    "prep_dataset": true,
     "mode": "object",
     "masking_prompt": "a yellow cartoon banana",
     "caption_prefix": "Banny, the yellow cartoon bananaman", 

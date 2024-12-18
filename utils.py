@@ -96,7 +96,7 @@ def construct_config(config_path: str) -> Dict[str, Any]:
         # create output directory if it doesn't exist:
         os.makedirs(config["output_dir"], exist_ok=True)
         
-        return construct_toml(config)
+        return config
     except Exception as e:
         logging.error(f"Error in construct_config: {str(e)}")
         raise
@@ -391,6 +391,7 @@ def prep_dataset(config):
     config = create_sample_prompts(config)
     # Convert all Path objects to strings before JSON serialization
     serializable_config = path_to_str(config)
+    config = construct_toml(config)
     
     with open(Path(config["output_dir"]) / "config.json", 'w') as f:
         json.dump(serializable_config, f, indent=4)
