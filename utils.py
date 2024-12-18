@@ -90,7 +90,13 @@ def construct_config(config_path: str) -> Dict[str, Any]:
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M")
         config["timestamp"] = timestamp
-        config["output_name"] = f"{Path(config['dataset_path']).name}_{timestamp}.zip"
+
+        dataset_basename = os.path.basename(config["dataset_path"])
+        if config.get("output_name"):
+            config["output_name"] += f"_{timestamp}_{dataset_basename}"
+        else:
+            config["output_name"] = f"{timestamp}_{dataset_basename}"
+        
         config["output_dir"] = str(Path("results") / config['output_name'])
 
         # create output directory if it doesn't exist:
