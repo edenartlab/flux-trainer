@@ -64,16 +64,11 @@ def main():
         config = construct_config("tmp_train_config.json")
 
         # Download the dataset from the URL provided
-        lora_training_urls = task_args["lora_training_urls"]
-        download_dataset(config["dataset_path"], lora_training_urls)
+        download_dataset(config["dataset_path"], task_args["lora_training_urls"])
         
         # Use GPT4v to check if the dataset is a face or style
-        config["mode"] = "style"
-        try:
-            if eden_utils.check_if_face(config["dataset_path"]):
-                config["mode"] = "face"
-        except Exception as e:
-            print("GPT error, assuming mode=style. Error: ", e)
+        if not config.get("mode"):
+            config["mode"] = eden_utils.auto_detect_training_mode(config["dataset_path"])
 
         # Preprocess the dataset:
         config = prep_dataset(config)

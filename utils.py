@@ -377,6 +377,8 @@ def prep_dataset(config):
     if config["mode"] == "style": # disable prefix and masking for style transfer
         config["caption_prefix"] = ""
         config["masking_prompt"] = ""
+    if config["mode"] == "face":  # set masking prompt to "face" for face mode
+        config["masking_prompt"] = "face"
 
     if config.get("masking_prompt"):
         # load all images from new_data_dir:

@@ -285,59 +285,71 @@ def describe_image_concept(images_dir):
     
     return detailed, short
 
-def check_if_face(images_dir):
-    """Checks if a set of images depict a face."""
-    
+def auto_detect_training_mode(images_dir, n_img_samples = 6):
+    """
+    Analyzes sample images to determine the appropriate LoRA training mode.
+    Returns one of: "style", "object", or "face"
+    """
     client = OpenAI()
 
     # Get the list of image files in the training directory
     image_files = os.listdir(images_dir)
     image_files = [os.path.join(images_dir, f) for f in image_files if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tiff'))]
-    n = min(4, len(image_files))
+    n = min(n_img_samples, len(image_files))
     selected_images = random.sample(image_files, n)
-    print("check these images for faces:", selected_images)
+    print("Analyzing images for training mode:", selected_images)
 
-    class IsFace(BaseModel):
+    class ImageAnalysis(BaseModel):
         """
-        Decide whether the attached images are predominantly of a person's face or not. If the images predominantly depict literally anything else other than a person's face, select false.
+        Analyze what the images predominantly depict:
+        - If they show primarily one person's face, select 'face'
+        - If they show primarily one specific object, character, or thing, select 'object'
+        - If they show primarily an artistic style, aesthetic, or diverse subjects in a consistent style, select 'style'
         """
-        is_face: bool
+        mode: str
+
+        @field_validator('mode')
+        def validate_mode(cls, v):
+            if v not in ['face', 'object', 'style']:
+                raise ValueError('mode must be one of: face, object, style')
+            return v
 
     image_attachments = [
         {
             "type": "image_url",
             "image_url": {
-                "url": f"data:image/jpeg;base64,{image_to_base64(image_path, max_size=512)}"
+                "url": f"data:image/jpeg;base64,{image_to_base64(image_path, max_size=512)}",
+                "detail": "low"
             },
         }
         for image_path in selected_images
     ]
 
     response = client.beta.chat.completions.parse(
-        model="gpt-4o-mini",
+        model="gpt-4o",
         messages=[
             {
                 "role": "system", 
-                "content": "Decide whether the attached images depict a person's face or not."
+                "content": "Analyze images to determine the appropriate LoRA training mode, which is one of 'face', 'object', or 'style'."
             },
             {
                 "role": "user", 
                 "content": [
                     {
                         "type": "text",
-                        "text": "Look at the attached images. If the images predominantly depict the face of a single person, select true. If the images are predominantly of anything else, select false."
+                        "text": """Look at the attached images and determine their primary content type (used for LoRA training mode):
+                        - Select 'face' if they mostly show picutres of one person/character's face
+                        - Select 'object' if they mostly show a specific object, character, or thing
+                        - Select 'style' if they mostly demonstrate a consistent artistic style or aesthetic across diverse subjects or scenes"""
                     },
                     *image_attachments
                 ],            
             },
         ],
-        response_format=IsFace,
+        response_format=ImageAnalysis,
     )
 
-    is_face = response.choices[0].message.parsed
-    if is_face:
-        print("Images are predominantly of a person's face.")
-    else:
-        print("Images are not of a face, assigning style mode.")
-
-    return is_face
+    mode = response.choices[0].message.parsed.mode
+    print(f"Detected training mode: {mode}")
+    
+    return mode

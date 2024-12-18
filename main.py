@@ -128,12 +128,11 @@ def run_trainer(args, verbose = True):
     # Step 2: Download the dataset from the URL provided
     if args.dataset_url:
         download_dataset(config["dataset_path"], [args.dataset_url])
-    else:
-        print(f"Using local dataset at {config['dataset_path']}")
 
+    # Step 3: Prepare dataset:
     config = prep_dataset(config) 
 
-    # Step 5: Construct and run the training command
+    # Step 4: Construct and run the training command
     cmd = construct_train_command(config)
 
     if verbose:
