@@ -216,6 +216,76 @@ def make_slug(task):
     return slug
 
 def describe_image_concept(images_dir):
+    """Gets both a detailed and concise description of the main visual concept in a set of images."""
+    import os
+    import random
+    from openai import OpenAI
+    from pydantic import BaseModel
+    
+    client = OpenAI()
+    
+    # Get the list of image files in the directory
+    image_files = os.listdir(images_dir)
+    image_files = [os.path.join(images_dir, f) for f in image_files 
+                  if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tiff'))]
+    
+    n = min(6, len(image_files))
+    selected_images = random.sample(image_files, n)
+
+    class ImageDescriptions(BaseModel):
+        """Detailed and concise descriptions of the main concept in the images."""
+        detailed_description: str
+        short_description: str
+
+    image_attachments = [
+        {
+            "type": "image_url",
+            "image_url": {
+                "url": f"data:image/jpeg;base64,{image_to_base64(image_path, max_size=512)}",
+                "detail": "low"
+            },
+        }
+        for image_path in selected_images
+    ]
+    
+    response = client.beta.chat.completions.parse(
+        model="gpt-4o",  # Using the correct vision model
+        messages=[
+            {
+                "role": "system",
+                "content": "You carefully investigate the visual commonalities between presented images."
+            },
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": """Provide two descriptions of the shared concept in these images:
+
+1. A detailed visual description of the shared concept (object / character / person / ...) in these images of maximum 15 words. Focus on the key visual features (like colors, shapes, accessories, expressions, style, ...) of the central subject, avoiding abstract words or interpretations. Your description should help someone generate a specific, representative example of the concept. Use precise, observable terms - for example, describe 'red' instead of 'colorful', 'standing upright' instead of 'positioned', 'wearing a blue hat' instead of 'accessorized'. Avoid describing actions, emotions or contexts. Ignore any aspect of the main concept that varies across examples, the goal is to create a clear mental picture of the archetypal instance of what's shown through a single description that captures the detailed, visual, common essence of the concept in the images.
+
+2. A concise description (max 5 words) that captures just the essential visual concept and will be used to generate masks through CLIPSegmentation."""
+                    },
+                    *image_attachments
+                ],
+            },
+        ],
+        response_format=ImageDescriptions,
+    )
+    
+    detailed = response.choices[0].message.parsed.detailed_description.lower()
+    short = response.choices[0].message.parsed.short_description.lower()
+    
+    # remove any trailing punctuation from both descriptions
+    detailed = detailed.strip().rstrip('.').rstrip(',')
+    short = short.strip().rstrip('.').rstrip(',')
+
+    print(f"Detailed description: {detailed}")
+    print(f"Short description: {short}")
+    
+    return detailed, short
+
+def describe_image_concept_old(images_dir):
     """Gets a concise description of the main visual concept in a set of images."""
     import os
     import random

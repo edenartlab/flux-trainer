@@ -12,7 +12,8 @@
     "max_train_steps": "5000",
     "save_every_n_steps": "1000",
     "sample_every_n_steps": "1000",
-    "seed": "42",
+    "gradient_accumulation_steps": "1",
+    "seed": "0",
 
     "MODEL_PATH": "models/flux-dev-de-distill-diffusers",
     "CLIP_L_PATH": "models/clip_l.safetensors",

@@ -1,0 +1,3 @@
+a painting of TOK with a mustache by Vincent van Gogh, starry night sky and beautiful city in the background --w 768 --h 768 --s 20 --d 4
+A hyper realistic, dramatic candid photo of TOK nearing Mount Everest's summit, weathered by extreme conditions and illuminated by the golden alpenglow. Ice crystals clinging while his determined eyes, pierce through swirling snow. Oxygen mask hangs at his neck, prayer flags flutter in the background against the azure sky. National Geographic award winning photograph. --w 768 --h 768 --s 20 --d 4
+a depiction of TOK as a lego figure --w 768 --h 768 --s 20 --d 4

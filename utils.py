@@ -319,7 +319,7 @@ def clipseg_mask_generator(
     del model
     gc.collect()
     torch.cuda.empty_cache()
-
+    
     return masks
 
 
@@ -366,17 +366,18 @@ def prep_dataset(config):
     config["dataset_path"] = new_data_dir
     
     if not config.get("caption_prefix") and config["mode"] != "style":
-        config["caption_prefix"] = describe_image_concept(new_data_dir)
+        config["caption_prefix"], config["masking_prompt"] = describe_image_concept(new_data_dir)
 
     if config["mode"] == "style":
         config["caption_prefix"] = ""
+        config["masking_prompt"] = ""
 
-    if config.get("caption_prefix", False):
+    if config.get("masking_prompt", False):
         # load all images from new_data_dir:
         img_filepaths = sorted([os.path.join(new_data_dir, f) for f in os.listdir(new_data_dir) if f.endswith('.jpg')])
         images = [Image.open(f) for f in img_filepaths]
         print(f"Generating CLIPSeg masks for {len(images)} images...", flush=True)
-        masks = clipseg_mask_generator(images, config["caption_prefix"])
+        masks = clipseg_mask_generator(images, config["masking_prompt"])
 
         # save these masks to a new directory:
         mask_dir = os.path.join(new_data_root_dir, "masks")
