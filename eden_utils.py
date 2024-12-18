@@ -27,10 +27,16 @@ AWS_BUCKET_NAME_STAGE = os.getenv("AWS_BUCKET_NAME_STAGE")
 AWS_BUCKET_NAME_PROD = os.getenv("AWS_BUCKET_NAME_PROD")
 
 client = MongoClient(MONGO_URI)
-db = client[MONGO_DB_NAME_STAGE]
-models_collection = db["models"]
-tasks_collection = db["tasks2"]
-users_collection = db["users"]
+try:
+    db = client[MONGO_DB_NAME_STAGE]
+    models_collection = db["models"]
+    tasks_collection = db["tasks2"]
+    users_collection = db["users"]
+except: # allows running the main trainer code without interacting with our mongo db
+    db = None
+    models_collection = None
+    tasks_collection = None
+    users_collection = None
 
 
 s3 = boto3.client(
@@ -209,6 +215,65 @@ def make_slug(task):
     slug = f"{username}/{name}/v{version}"
     return slug
 
+def describe_image_concept(images_dir):
+    """Gets a concise description of the main visual concept in a set of images."""
+    import os
+    import random
+    from openai import OpenAI
+    from pydantic import BaseModel
+    
+    client = OpenAI()
+    
+    # Get the list of image files in the directory
+    image_files = os.listdir(images_dir)
+    image_files = [os.path.join(images_dir, f) for f in image_files 
+                  if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tiff'))]
+    
+    n = min(6, len(image_files))
+    selected_images = random.sample(image_files, n)
+
+    class ImageDescription(BaseModel):
+        """A very short description of the main concept in the images."""
+        description: str
+
+    image_attachments = [
+        {
+            "type": "image_url",
+            "image_url": {
+                "url": f"data:image/jpeg;base64,{image_to_base64(image_path, max_size=512)}",
+                "detail": "low"
+            },
+        }
+        for image_path in selected_images
+    ]
+    
+    response = client.beta.chat.completions.parse(
+        model="gpt-4o",  # Using the correct vision model
+        messages=[
+            {
+                "role": "system",
+                "content": "You carefully investigate the visual commonalities between presented images."
+            },
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "Provide a concrete visual description of the shared concept in these images using maximum 10 words. Focus on the key visual features (like colors, shapes, accessories, expressions, ...) of the central subject, avoiding abstract words or interpretations. Your description should help someone picture a specific, representative example of what these images show, rather than covering all variations. Use precise, observable terms - for example, describe 'red' instead of 'colorful', 'standing upright' instead of 'positioned', 'wearing a blue hat' instead of 'accessorized'. Avoid describing actions, emotions, contexts, or multiple variations. Ignore any aspect of the main concept that varies across examples, the goal is to create a clear mental picture of one archetypal instance of what's shown through a single description that captures the visual, common essence of the images."
+                    },
+                    *image_attachments
+                ],
+            },
+        ],
+        response_format=ImageDescription,
+    )
+    
+    description = response.choices[0].message.parsed.description
+    # remove any trailing punctuation:
+    description = description.strip().rstrip('.').rstrip(',')
+    
+    print(f"Main concept description: {description}")
+    return description
 
 def check_if_face(images_dir):
     """Checks if a set of images depict a face."""

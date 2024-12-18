@@ -76,9 +76,8 @@ def main():
         except Exception as e:
             print("GPT error, assuming mode=style. Error: ", e)
 
-        # Preprocess the dataset if required
-        if config.get("prep_dataset"):
-            config = prep_dataset(config["dataset_path"], hard_prep=True)
+        # Preprocess the dataset:
+        config = prep_dataset(config)
 
         # Perform dataset captioning if enabled in the config
         if config.get("caption_mode"):

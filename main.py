@@ -126,11 +126,11 @@ def run_trainer(args, verbose = True):
     # Step 2: Download the dataset from the URL provided
     if args.dataset_url:
         download_dataset(config["dataset_path"], [args.dataset_url])
+    else:
+        print(f"Using local dataset at {config['dataset_path']}")
 
-    # Step 3: Preprocess the dataset if required
-    if config.get("prep_dataset"):
-        config = prep_dataset(config, hard_prep=True)
-
+    config = prep_dataset(config) 
+    
     # Step 4: Perform dataset captioning if enabled in the config
     if config.get("caption_mode"):
         # <CAPTION>, <DETAILED_CAPTION>, <MORE_DETAILED_CAPTION>

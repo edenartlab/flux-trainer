@@ -13,6 +13,8 @@ from PIL import Image
 import shutil
 from pathlib import Path
 
+from eden_utils import describe_image_concept
+
 def path_to_str(obj: Any) -> Any:
     """Convert Path objects to strings."""
     if isinstance(obj, Path):
@@ -75,6 +77,7 @@ def create_sample_prompts(config):
     eval_prompts_path = Path(config["output_dir"]) / "eval_prompts.txt"
     with open(eval_prompts_path, 'w') as f:
         f.writelines(new_text_lines)
+
     config["eval_prompts"] = str(eval_prompts_path)
     return config
 
@@ -90,16 +93,9 @@ def construct_config(config_path: str) -> Dict[str, Any]:
         config["output_name"] = f"{Path(config['dataset_path']).name}_{timestamp}.zip"
         config["output_dir"] = str(Path("results") / config['output_name'])
 
-        Path(config["output_dir"]).mkdir(parents=True, exist_ok=True)
+        # create output directory if it doesn't exist:
+        os.makedirs(config["output_dir"], exist_ok=True)
         
-        # Convert all Path objects to strings before JSON serialization
-        serializable_config = path_to_str(config)
-        
-        with open(Path(config["output_dir"]) / "config.json", 'w') as f:
-            json.dump(serializable_config, f, indent=4)
-
-        config = create_sample_prompts(config)
-
         return construct_toml(config)
     except Exception as e:
         logging.error(f"Error in construct_config: {str(e)}")
@@ -323,7 +319,7 @@ def clipseg_mask_generator(
     return masks
 
 
-def prep_dataset(config, hard_prep = True):
+def prep_dataset(config):
     root_directory = config["dataset_path"]
 
     new_data_root_dir = os.path.join(config["output_dir"], "dataset")
@@ -362,7 +358,10 @@ def prep_dataset(config, hard_prep = True):
                 shutil.copy(file_path, os.path.join(error_dir, file))
 
     print(f"{total_imgs} imgs from {root_directory} converted to .jpg and saved to {new_data_dir}. Resized {resized} images.", flush=True)
-    config["dataset_path"] = new_data_dir
+    
+    config["dataset_path"]   = new_data_dir
+    config["masking_prompt"] = describe_image_concept(new_data_dir)
+    config["caption_prefix"] = config["masking_prompt"]
 
     if config.get("masking_prompt", False):
         # load all images from new_data_dir:
@@ -387,6 +386,14 @@ def prep_dataset(config, hard_prep = True):
         config["alpha_mask"] = True
     else:
         config["alpha_mask"] = False
+
+    # finally:
+    config = create_sample_prompts(config)
+    # Convert all Path objects to strings before JSON serialization
+    serializable_config = path_to_str(config)
+    
+    with open(Path(config["output_dir"]) / "config.json", 'w') as f:
+        json.dump(serializable_config, f, indent=4)
 
     return config
 
