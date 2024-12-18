@@ -359,16 +359,17 @@ def prep_dataset(config):
 
     print(f"{total_imgs} imgs from {root_directory} converted to .jpg and saved to {new_data_dir}. Resized {resized} images.", flush=True)
     
-    config["dataset_path"]   = new_data_dir
-    config["masking_prompt"] = describe_image_concept(new_data_dir)
-    config["caption_prefix"] = config["masking_prompt"]
+    config["dataset_path"] = new_data_dir
 
-    if config.get("masking_prompt", False):
+    if not config.get("caption_prefix"):
+        config["caption_prefix"] = describe_image_concept(new_data_dir)
+
+    if config.get("caption_prefix", False):
         # load all images from new_data_dir:
         img_filepaths = sorted([os.path.join(new_data_dir, f) for f in os.listdir(new_data_dir) if f.endswith('.jpg')])
         images = [Image.open(f) for f in img_filepaths]
         print(f"Generating CLIPSeg masks for {len(images)} images...", flush=True)
-        masks = clipseg_mask_generator(images, config["masking_prompt"])
+        masks = clipseg_mask_generator(images, config["caption_prefix"])
 
         # save these masks to a new directory:
         mask_dir = os.path.join(new_data_root_dir, "masks")
