@@ -266,8 +266,8 @@ def clipseg_mask_generator(
         "CIDAS/clipseg-rd64-refined", "CIDAS/clipseg-rd16"
     ] = "CIDAS/clipseg-rd64-refined",
     device=torch.device("cuda" if torch.cuda.is_available() else "cpu"),
-    bias: float = 0.01,
-    temp: float = 1.0,
+    bias: float = 0.0,
+    temp: float = 0.75,
     **kwargs,
 ) -> List[Image.Image]:
     """
@@ -307,7 +307,6 @@ def clipseg_mask_generator(
 
             # make mask greyscale
             mask = Image.fromarray(probs.cpu().numpy()).convert("L")
-
             # resize mask to original size
             mask = mask.resize(original_size)
         else:
@@ -319,7 +318,7 @@ def clipseg_mask_generator(
     del model
     gc.collect()
     torch.cuda.empty_cache()
-    
+
     return masks
 
 
@@ -365,26 +364,23 @@ def prep_dataset(config):
     
     config["dataset_path"] = new_data_dir
     
-    if not config.get("caption_prefix") and config["mode"] != "style":
-        config["caption_prefix"], config["masking_prompt"] = describe_image_concept(new_data_dir)
+    if (not config.get("caption_prefix") or not config.get("masking_prompt")) and config["mode"] != "style":
+        gpt_caption_prefix, gpt_masking_prompt = describe_image_concept(new_data_dir)
+        if not config.get("caption_prefix"):
+            config["caption_prefix"] = gpt_caption_prefix
+        if not config.get("masking_prompt"):
+            config["masking_prompt"] = gpt_masking_prompt
 
-    if config["mode"] == "style":
+    if config["mode"] == "style": # disable prefix and masking for style transfer
         config["caption_prefix"] = ""
         config["masking_prompt"] = ""
 
-    if config.get("masking_prompt", False):
+    if config.get("masking_prompt"):
         # load all images from new_data_dir:
         img_filepaths = sorted([os.path.join(new_data_dir, f) for f in os.listdir(new_data_dir) if f.endswith('.jpg')])
         images = [Image.open(f) for f in img_filepaths]
         print(f"Generating CLIPSeg masks for {len(images)} images...", flush=True)
         masks = clipseg_mask_generator(images, config["masking_prompt"])
-
-        # save these masks to a new directory:
-        mask_dir = os.path.join(new_data_root_dir, "masks")
-        os.makedirs(mask_dir, exist_ok=True)
-
-        for i, mask in enumerate(masks):
-            mask.save(os.path.join(mask_dir, os.path.basename(img_filepaths[i])))
 
         # Now, iterate over the images, add the corresponding mask as alpha channel and save the resulting image as png (overwriting the jpg):
         for i, img in enumerate(images):

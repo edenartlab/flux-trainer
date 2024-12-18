@@ -5,34 +5,33 @@ import json
 import shutil
 import time
 from tqdm import tqdm
+from datetime import datetime
 
 # Setup the base experiment config
-exp_name = "banny_sweep"
+exp_name = "banny_lora_rank"
 n_exp = 100  # how many random experiment settings to generate
-min_hamming_distance = 2  # min params that have to be different from previous experiments
+min_hamming_distance = 1  # min params that have to be different from previous experiments
 nohup = True
 
 # Define training hyperparameters and their possible values
 hyperparameters = {
     "dataset_path": [
-        "/data/xander/Projects/cog/GitHub_repos/flux-trainer/datasets/banny",
-        "/data/xander/Projects/cog/GitHub_repos/flux-trainer/datasets/banny_all"
+        "/data/xander/Projects/cog/GitHub_repos/flux-trainer/datasets/banny_best"
     ],
     "caption_mode": [None],
     "mode": ["object"],
-    "masking_prompt": ["TOK"],
-    "caption_prefix": ["TOK"],
-    "caption_suffix": [""],  # Keeping this constant
+    "caption_prefix": ["expressive yellow banana character with large eyes and a pink mouth, wearing a spiked, black collar"],
+    "masking_prompt": ["yellow banana character"],
     "dataset_toml": [
-        "template/dataset_template_512_bs1.toml",
+        #"template/dataset_template_512_bs1.toml",
         "template/dataset_template_512_bs2.toml",
         #"template/dataset_template_1024_bs1.toml",
         #"template/dataset_template_1024_bs2.toml",
     ],
     "eval_prompts": ["template/eval_prompts_TOK.txt"],  # Keeping this constant
     "full_finetune": [False],
-    "lora_rank": ["4", "8"],
-    "learning_rate": ["1.0e-4", "3e-4"],
+    "lora_rank": ["4", "32", "128"],
+    "learning_rate": ["2.0e-4"],
     "max_train_steps": ["3000"],
     "save_every_n_steps": ["1000"],
     "sample_every_n_steps": ["1000"],
