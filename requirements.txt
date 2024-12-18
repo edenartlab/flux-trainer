@@ -6,7 +6,6 @@ huggingface_hub
 transformers
 python-dotenv
 boto3
-magic
 python-magic
 openai
 pymongo
