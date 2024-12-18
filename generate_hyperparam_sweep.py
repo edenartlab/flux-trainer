@@ -6,22 +6,11 @@ import shutil
 import time
 from tqdm import tqdm
 
-def hamming_distance(dict1, dict2):
-    """Calculate number of different values between two dictionaries."""
-    distance = 0
-    for key in dict1.keys():
-        if dict1[key] != dict2.get(key, None):
-            distance += 1
-    return distance
-
 # Setup the base experiment config
-exp_name = "banny"
-output_dir = "results_grid"
+exp_name = "banny_sweep"
 n_exp = 100  # how many random experiment settings to generate
-min_hamming_distance = 3  # min params that have to be different from previous experiments
+min_hamming_distance = 2  # min params that have to be different from previous experiments
 nohup = True
-output_sh_path = f"gridsearch_configs/{exp_name}.sh"
-
 
 # Define training hyperparameters and their possible values
 hyperparameters = {
@@ -47,7 +36,7 @@ hyperparameters = {
     "max_train_steps": ["3000"],
     "save_every_n_steps": ["1000"],
     "sample_every_n_steps": ["1000"],
-    "seed": ["42"],  # Keeping this constant
+    "seed": ["1"],  # Keeping this constant
     "MODEL_PATH": [
         "models/flux-dev-de-distill-diffusers",
         #"models/flux1-dev.safetensors"
@@ -56,6 +45,20 @@ hyperparameters = {
     "T5XXL_PATH": ["models/t5xxl_fp16.safetensors"],
     "AE_PATH": ["models/ae.safetensors"]
 }
+
+#############################################
+
+def hamming_distance(dict1, dict2):
+    """Calculate number of different values between two dictionaries."""
+    distance = 0
+    for key in dict1.keys():
+        if dict1[key] != dict2.get(key, None):
+            distance += 1
+    return distance
+
+timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+exp_name += f"_{timestamp}"
+output_sh_path = f"{exp_name}.sh"
 
 # Create output directories
 config_output_dir = f"gridsearch_configs/{exp_name}"
@@ -77,13 +80,6 @@ for exp_index in tqdm(range(n_exp)):
         # Generate random experiment settings
         experiment_settings = {name: random.choice(values) for name, values in hyperparameters.items()}
         
-        # Add timestamp and output paths
-        timestamp = time.strftime("%Y%m%d_%H%M")
-        output_name = f"{exp_name}_{timestamp}_{exp_index:03d}.zip"
-        experiment_settings["timestamp"] = timestamp
-        experiment_settings["output_name"] = output_name
-        experiment_settings["output_dir"] = f"{output_dir}/{output_name}"
-        
         resamples += 1
 
         # Check minimum distance from existing experiments
@@ -96,6 +92,10 @@ for exp_index in tqdm(range(n_exp)):
         if min_distance >= min_hamming_distance:
             str_experiment_settings = str(sorted(experiment_settings.items()))
             scheduled_experiments.add(str_experiment_settings)
+
+            # Add output paths
+            output_name = f"{exp_name}_{exp_index:03d}"
+            experiment_settings["output_name"] = output_name
             
             # Save config to JSON file
             config_filename = f"{config_output_dir}/{exp_name}_{exp_index:03d}.json"
@@ -118,13 +118,23 @@ def generate_sh_script(folder_path, output_sh_path):
     with open(output_sh_path, 'w') as sh_file:
         sh_file.write("#!/bin/bash\n\n")
         
-        for json_file in json_files:
+        # Get total number of files for handling the last line differently
+        total_files = len(json_files)
+        
+        for i, json_file in enumerate(json_files):
             file_path = os.path.join(folder_path, json_file)
-            command = f"python main.py --config {file_path}\n"
+            base_command = f"nohup python main.py --config {file_path}"
+            log_path = file_path.replace('.json', '.log')
             
-            if nohup:
-                command = f"nohup {command} > {file_path.replace('.json', '.log')} 2>&1 &\n"
+            # Add command with log redirection
+            command = f"{base_command} > {log_path} 2>&1"
             
+            # Add line continuation if not the last line
+            if i < total_files - 1:
+                command += " ; \\\n"
+            else:
+                command += "\n"
+                
             sh_file.write(command)
 
 generate_sh_script(config_output_dir, output_sh_path)
