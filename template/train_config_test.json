@@ -2,7 +2,6 @@
     "dataset_path": "/data/xander/Projects/cog/GitHub_repos/flux-trainer/datasets/banny",
     "caption_mode": null,
     "mode": "object",
-    "masking_prompt": "TOK",
     "caption_prefix": "TOK", 
     "caption_suffix": "",
     "dataset_toml": "template/dataset_template_512_bs2.toml",

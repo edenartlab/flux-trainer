@@ -366,9 +366,12 @@ def prep_dataset(config):
     print(f"{total_imgs} imgs from {root_directory} converted to .jpg and saved to {new_data_dir}. Resized {resized} images.", flush=True)
     
     config["dataset_path"] = new_data_dir
-
-    if not config.get("caption_prefix"):
+    
+    if not config.get("caption_prefix") and config["mode"] != "style":
         config["caption_prefix"] = describe_image_concept(new_data_dir)
+
+    if config["mode"] == "style":
+        config["caption_prefix"] = ""
 
     if config.get("caption_prefix", False):
         # load all images from new_data_dir:

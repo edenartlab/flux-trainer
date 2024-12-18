@@ -2,7 +2,6 @@
     "dataset_path": "training_images",
     "caption_mode": null,
     "mode": "object",
-    "masking_prompt": "",
     "caption_prefix": "my_new_concept_or_style", 
     "caption_suffix": "",
     "dataset_toml": "template/dataset_template_512_bs2.toml",
