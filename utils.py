@@ -38,8 +38,6 @@ def construct_toml(config: Dict[str, Any]) -> Dict[str, Any]:
                     subset['image_dir'] = config['dataset_path']
                     if config["caption_prefix"]:
                         subset['caption_prefix'] = config["caption_prefix"]
-                    if config["caption_suffix"]:
-                        subset['caption_suffix'] = config["caption_suffix"]
 
     logging.info(f"All instances of 'image_dir' in dataset.toml updated to: {config['dataset_path']}")
     
