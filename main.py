@@ -49,8 +49,13 @@ def construct_train_command(config: Dict[str, Any]) -> List[str]:
             "--blocks_to_swap", "8", 
             "--full_bf16", 
             "--learning_rate", config['learning_rate'],
+            "--noise_offset", config['noise_offset'],
+            "--noise_offset_random_strength",
+            "--ip_noise_gamma", config['ip_noise_gamma'],
+            "--ip_noise_gamma_random_strength",
             #"--lr_scheduler", "cosine",
             "--lr_scheduler", "constant_with_warmup",
+            "--lr_warmup_steps", "0.05",
             #"--cache_text_encoder_outputs",
             "--cache_text_encoder_outputs_to_disk",
             "--max_grad_norm", "0.0", 
@@ -97,8 +102,13 @@ def construct_train_command(config: Dict[str, Any]) -> List[str]:
             "--network_dim", config['lora_rank'],
             "--optimizer_type", "adamw8bit",
             "--learning_rate", config['learning_rate'],
+            "--noise_offset", config['noise_offset'],
+            "--noise_offset_random_strength",
+            "--ip_noise_gamma", config['ip_noise_gamma'],
+            "--ip_noise_gamma_random_strength",
             #"--lr_scheduler", "cosine",
             "--lr_scheduler", "constant_with_warmup",
+            "--lr_warmup_steps", "0.05",
             "--cache_latents_to_disk",
             "--cache_text_encoder_outputs_to_disk",
             "--max_grad_norm", "0.0", 
@@ -120,6 +130,21 @@ def construct_train_command(config: Dict[str, Any]) -> List[str]:
     # train on 1024
 
     return cmd
+
+"""
+
+args to test out from library/train_util.py:
+
+
+loss_type
+gradient_accumulation_steps
+color_aug
+face_crop_aug_range
+zero_terminal_snr
+adaptive_noise_scale
+max_grad_norm
+
+"""
 
 def run_trainer(args, verbose = True):
     # Step 1: Load the training config from the provided file
