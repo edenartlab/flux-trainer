@@ -35,6 +35,7 @@ hyperparameters = {
     "max_train_steps": ["3000"],
     "save_every_n_steps": ["1000"],
     "sample_every_n_steps": ["1000"],
+    "gradient_accumulation_steps": ["1"],
     "seed": ["1"],  # Keeping this constant
     "MODEL_PATH": [
         "models/flux-dev-de-distill-diffusers",
