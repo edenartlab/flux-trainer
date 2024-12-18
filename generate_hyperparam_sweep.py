@@ -6,23 +6,11 @@ import shutil
 import time
 from tqdm import tqdm
 
-def hamming_distance(dict1, dict2):
-    """Calculate number of different values between two dictionaries."""
-    distance = 0
-    for key in dict1.keys():
-        if dict1[key] != dict2.get(key, None):
-            distance += 1
-    return distance
-
 # Setup the base experiment config
-exp_name = "banny"
-output_dir = "results_grid"
+exp_name = "banny_sweep"
 n_exp = 100  # how many random experiment settings to generate
 min_hamming_distance = 2  # min params that have to be different from previous experiments
 nohup = True
-
-timestamp = datetime.now().strftime("%Y%m%d_%H%M")
-output_sh_path = f"{exp_name}_{timestamp}.sh"
 
 # Define training hyperparameters and their possible values
 hyperparameters = {
@@ -57,6 +45,20 @@ hyperparameters = {
     "T5XXL_PATH": ["models/t5xxl_fp16.safetensors"],
     "AE_PATH": ["models/ae.safetensors"]
 }
+
+#############################################
+
+def hamming_distance(dict1, dict2):
+    """Calculate number of different values between two dictionaries."""
+    distance = 0
+    for key in dict1.keys():
+        if dict1[key] != dict2.get(key, None):
+            distance += 1
+    return distance
+
+timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+exp_name += f"_{timestamp}"
+output_sh_path = f"{exp_name}.sh"
 
 # Create output directories
 config_output_dir = f"gridsearch_configs/{exp_name}"
@@ -94,7 +96,6 @@ for exp_index in tqdm(range(n_exp)):
             # Add output paths
             output_name = f"{exp_name}_{exp_index:03d}"
             experiment_settings["output_name"] = output_name
-            experiment_settings["output_dir"] = f"{output_dir}/{output_name}"
             
             # Save config to JSON file
             config_filename = f"{config_output_dir}/{exp_name}_{exp_index:03d}.json"
