@@ -259,7 +259,7 @@ def describe_image_concept(images_dir):
                 "content": [
                     {
                         "type": "text",
-                        "text": "Provide a concrete visual description of the shared concept in these images using maximum 10 words. Focus on the key visual features (like colors, shapes, accessories, expressions, ...) of the central subject, avoiding abstract words or interpretations. Your description should help someone picture a specific, representative example of what these images show, rather than covering all variations. Use precise, observable terms - for example, describe 'red' instead of 'colorful', 'standing upright' instead of 'positioned', 'wearing a blue hat' instead of 'accessorized'. Avoid describing actions, emotions, contexts, or multiple variations. Ignore any aspect of the main concept that varies across examples, the goal is to create a clear mental picture of one archetypal instance of what's shown through a single description that captures the visual, common essence of the images."
+                        "text": "Provide a detailed visual description of the shared concept (object / character / person / ...) in these images using maximum 15 words. Focus on the key visual features (like colors, shapes, accessories, expressions, style, ...) of the central subject, avoiding abstract words or interpretations. Your description should help someone generate a specific, representative example of the concept. Use precise, observable terms - for example, describe 'red' instead of 'colorful', 'standing upright' instead of 'positioned', 'wearing a blue hat' instead of 'accessorized'. Avoid describing actions, emotions or contexts. Ignore any aspect of the main concept that varies across examples, the goal is to create a clear mental picture of the archetypal instance of what's shown through a single description that captures the detailed, visual, common essence of the concept in the images."
                     },
                     *image_attachments
                 ],
@@ -271,7 +271,7 @@ def describe_image_concept(images_dir):
     description = response.choices[0].message.parsed.description
     # remove any trailing punctuation:
     description = description.strip().rstrip('.').rstrip(',')
-    
+
     print(f"Main concept description: {description}")
     return description
 

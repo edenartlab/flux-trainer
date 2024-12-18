@@ -35,6 +35,7 @@ def construct_train_command(config: Dict[str, Any]) -> List[str]:
             "--cache_latents_to_disk",
             "--save_model_as", "safetensors",
             "--sdpa",
+            "-loss_type", "huber",
             "--alpha_mask" if config["alpha_mask"] else "",
             "--persistent_data_loader_workers",
             "--max_data_loader_n_workers", "2",
@@ -68,7 +69,6 @@ def construct_train_command(config: Dict[str, Any]) -> List[str]:
             "--guidance_scale", "1.0"
         ]
     else: # LoRA
-        
         cmd = [
             "accelerate", "launch",
             "--mixed_precision", "bf16",
@@ -82,6 +82,7 @@ def construct_train_command(config: Dict[str, Any]) -> List[str]:
             "--ae", config['AE_PATH'],
             "--save_model_as", "safetensors",
             "--sdpa",
+            "-loss_type", "huber",
             "--alpha_mask" if config["alpha_mask"] else "",
             "--persistent_data_loader_workers",
             "--max_data_loader_n_workers", "2",
@@ -130,7 +131,7 @@ def run_trainer(args, verbose = True):
         print(f"Using local dataset at {config['dataset_path']}")
 
     config = prep_dataset(config) 
-    
+
     # Step 4: Perform dataset captioning if enabled in the config
     if config.get("caption_mode"):
         # <CAPTION>, <DETAILED_CAPTION>, <MORE_DETAILED_CAPTION>
