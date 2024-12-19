@@ -384,7 +384,7 @@ def prep_dataset(config):
         print("!!!!!!!!!!!!!! XANDER DONT FORGET TO TURN THIS OFF !!!!!!!!!!!!")
 
     if config["mode"] == "style": # disable prefix and masking for style transfer
-        config["caption_prefix"] = ""
+        #config["caption_prefix"] = ""
         config["masking_prompt"] = ""
     if config["mode"] == "face":  # set masking prompt to "face" for face mode
         config["masking_prompt"] = "face"

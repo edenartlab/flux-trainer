@@ -95,7 +95,7 @@ def construct_train_command(config: Dict[str, Any]) -> List[str]:
             "--gradient_checkpointing",
             "--mixed_precision", "bf16",
             "--save_precision", "bf16",
-            #"--fp8_base",
+            "--fp8_base",
             "--gradient_accumulation_steps", config["gradient_accumulation_steps"],
             "--network_train_unet_only",
             "--network_module", "networks.lora_flux",
