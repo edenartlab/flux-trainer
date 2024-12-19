@@ -137,6 +137,7 @@ args to test out from library/train_util.py:
 
 
 loss_type
+add kwargs: weight_decay=1e-2 (= default for adamW8bit)
 gradient_accumulation_steps
 color_aug
 face_crop_aug_range

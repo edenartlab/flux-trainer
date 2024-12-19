@@ -1,6 +1,7 @@
 .env
 evals/
 gridsearch_configs/
+*.out
 *.sh
 sd-scripts/
 nohup.out
