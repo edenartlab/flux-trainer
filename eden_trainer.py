@@ -98,6 +98,7 @@ def main():
             "public": False,
             "task": task["_id"],
             "thumbnail": thumbnail_url,
+            "lora_trigger_text": config["caption_prefix"],
             # "slug": slug,
             "user": task["user"],
             "createdAt": datetime.utcnow(),

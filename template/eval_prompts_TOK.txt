@@ -2,9 +2,5 @@ a painting of TOK with a mustache by Vincent van Gogh, starry night sky and beau
 A hyper realistic, dramatic candid photo of TOK nearing Mount Everest's summit, weathered by extreme conditions and illuminated by the golden alpenglow. Ice crystals clinging while his determined eyes, pierce through swirling snow. Oxygen mask hangs at his neck, prayer flags flutter in the background against the azure sky. National Geographic award winning photograph. --w 768 --h 768 --s 20 --d 4
 a depiction of TOK as a lego figure --w 768 --h 768 --s 20 --d 4
 TOK on the cover of Vogue Magazine, super high fashion, elegant pose, luxurious design, glossy magazine cover --w 768 --h 768 --s 20 --d 4
-TOK checking his computer while chilling at the beach, sunny day, ocean waves, relaxed atmosphere, cartoon style --w 768 --h 768 --s 20 --d 4
 TOK speeding away in a Formula 1 racecar, crossing the finish line, high-speed action, dynamic motion blur, vibrant colors, cartoon style --w 768 --h 768 --s 20 --d 4
-a team of buff TOK gladiators protecting the castle, epic, heroic, detailed, vibrant colors --w 768 --h 768 --s 20 --d 4
 TOK doing squats at the gym, with a determined expression, surrounded by gym equipment and weights --w 768 --h 768 --s 20 --d 4
-a yellow banana character with brown spots, a black spiked collar and expressive eyes doing squats at the gym, with a determined expression, surrounded by gym equipment and weights --w 768 --h 768 --s 20 --d 4
-A photo of TOK at a beach sunset, playing an acoustic guitar, giving off a relaxed and artistic vibe. --w 768 --h 768 --s 20 --d 4

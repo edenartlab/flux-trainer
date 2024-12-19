@@ -36,7 +36,7 @@ def construct_train_command(config: Dict[str, Any]) -> List[str]:
             "--save_model_as", "safetensors",
             "--sdpa",
             #"--loss_type", "huber",
-            "--alpha_mask" if config["alpha_mask"] else "",
+            *(['--alpha_mask'] if config['alpha_mask'] else []),
             "--persistent_data_loader_workers",
             "--max_data_loader_n_workers", "2",
             "--seed", config['seed'],
@@ -65,7 +65,7 @@ def construct_train_command(config: Dict[str, Any]) -> List[str]:
             "--save_every_n_steps", config['save_every_n_steps'],
             "--sample_every_n_steps", config['sample_every_n_steps'],
             "--sample_prompts", config['eval_prompts'],
-            "--sample_at_first",
+            *(['--sample_at_first'] if config['sample_at_first'] else []),
             "--output_dir", str(config["output_dir"]),
             "--output_name", config["output_name"],
             "--timestep_sampling", "shift",
@@ -88,19 +88,20 @@ def construct_train_command(config: Dict[str, Any]) -> List[str]:
             "--save_model_as", "safetensors",
             "--sdpa",
             #"--loss_type", "huber",
-            "--alpha_mask" if config["alpha_mask"] else "",
+            *(['--alpha_mask'] if config['alpha_mask'] else []),
             "--persistent_data_loader_workers",
             "--max_data_loader_n_workers", "2",
             "--seed", config['seed'],
             "--gradient_checkpointing",
             "--mixed_precision", "bf16",
             "--save_precision", "bf16",
-            "--fp8_base",
+            #"--fp8_base",
             "--gradient_accumulation_steps", config["gradient_accumulation_steps"],
             "--network_train_unet_only",
             "--network_module", "networks.lora_flux",
             "--network_dim", config['lora_rank'],
             "--optimizer_type", "adamw8bit",
+            #"--optimizer_args", "weight_decay=0.1", 
             "--learning_rate", config['learning_rate'],
             "--noise_offset", config['noise_offset'],
             "--noise_offset_random_strength",
@@ -118,7 +119,7 @@ def construct_train_command(config: Dict[str, Any]) -> List[str]:
             "--save_every_n_steps", config['save_every_n_steps'],
             "--sample_every_n_steps", config['sample_every_n_steps'],
             "--sample_prompts", config['eval_prompts'],
-            "--sample_at_first",
+            *(['--sample_at_first'] if config['sample_at_first'] else []),
             "--output_dir", str(config["output_dir"]),
             "--output_name", config["output_name"],
             "--timestep_sampling", "shift",
@@ -133,7 +134,15 @@ def construct_train_command(config: Dict[str, Any]) -> List[str]:
 
 """
 
+TODO:
+
+- test style training mode
+- run inference sample imgs at the end (vincent prompts)
+- add trigger word to output args
+
+
 args to test out from library/train_util.py:
+
 
 
 loss_type

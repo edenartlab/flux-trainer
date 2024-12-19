@@ -374,6 +374,12 @@ def prep_dataset(config):
         if not config.get("masking_prompt"):
             config["masking_prompt"] = gpt_masking_prompt
 
+    if 0:
+        config["caption_prefix"] = ""
+        print("!!!!!!!!!!!!!! XANDER DONT FORGET TO TURN THIS OFF !!!!!!!!!!!!")
+        print("WARNING caption_prefix was hardcoded!!!!!")
+        print("!!!!!!!!!!!!!! XANDER DONT FORGET TO TURN THIS OFF !!!!!!!!!!!!")
+
     if config["mode"] == "style": # disable prefix and masking for style transfer
         config["caption_prefix"] = ""
         config["masking_prompt"] = ""
