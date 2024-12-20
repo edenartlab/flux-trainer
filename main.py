@@ -107,9 +107,11 @@ def construct_train_command(config: Dict[str, Any]) -> List[str]:
             "--noise_offset_random_strength",
             "--ip_noise_gamma", config['ip_noise_gamma'],
             "--ip_noise_gamma_random_strength",
-            #"--lr_scheduler", "cosine",
-            "--lr_scheduler", "constant_with_warmup",
-            "--lr_warmup_steps", "0.05",
+            "--lr_scheduler", "cosine_with_restarts",
+            "--lr_scheduler_num_cycles", "3",
+            "--network_alpha", config["network_alpha"],
+            #"--lr_scheduler", "constant_with_warmup",
+            #"--lr_warmup_steps", "0.05",
             "--cache_latents_to_disk",
             "--cache_text_encoder_outputs_to_disk",
             "--max_grad_norm", "0.0", 
@@ -136,6 +138,8 @@ def construct_train_command(config: Dict[str, Any]) -> List[str]:
 
 TODO:
 
+- modify to have automatic style description tag
+- caption with joycaption
 - test auto-caption with Florence2 + re-inject trigger text into prompt
 - run inference sample imgs at the end (vincent prompts)
 - add trigger word to output args

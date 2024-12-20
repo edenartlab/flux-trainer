@@ -15,4 +15,4 @@ bucket_reso_steps = 64
 
   [[datasets.subsets]]
   image_dir = "path_to_your_dataset_folder"
-  num_repeats = 2
+  num_repeats = 12

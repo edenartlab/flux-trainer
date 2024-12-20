@@ -8,7 +8,7 @@ from tqdm import tqdm
 from datetime import datetime
 
 # Setup the base experiment config
-exp_name = "banny_lora_rank"
+exp_name = "xander_civit_sweep"
 n_exp = 100  # how many random experiment settings to generate
 min_hamming_distance = 1  # min params that have to be different from previous experiments
 nohup = True
@@ -16,25 +16,28 @@ nohup = True
 # Define training hyperparameters and their possible values
 hyperparameters = {
     "dataset_path": [
-        "/data/xander/Projects/cog/GitHub_repos/flux-trainer/datasets/banny_best"
+        "/data/xander/Projects/cog/GitHub_repos/flux-trainer/datasets/xander_captioned_mini"
     ],
     "caption_mode": [None],
-    "mode": ["object"],
-    "caption_prefix": ["expressive yellow banana character with large eyes and a pink mouth, wearing a spiked, black collar"],
-    "masking_prompt": ["yellow banana character"],
+    "mode": ["face"],
+    "caption_prefix": ["a man named Xander Steenbrugge"],
+    "masking_prompt": ["face"],
     "dataset_toml": [
         #"template/dataset_template_512_bs1.toml",
-        "template/dataset_template_512_bs2.toml",
-        #"template/dataset_template_1024_bs1.toml",
-        #"template/dataset_template_1024_bs2.toml",
+        "template/dataset_template_512_bs4.toml"
     ],
     "eval_prompts": ["template/eval_prompts_TOK.txt"],  # Keeping this constant
     "full_finetune": [False],
-    "lora_rank": ["4", "32", "128"],
-    "learning_rate": ["2.0e-4"],
-    "max_train_steps": ["3000"],
-    "save_every_n_steps": ["1000"],
-    "sample_every_n_steps": ["1000"],
+    "sample_at_first": [False],
+    "lora_rank": ["2", "4", "10"],
+    "network_alpha": ["2", "4", "10"],
+    "learning_rate": ["0.5e-4"],
+    "ip_noise_gamma": ["0.0", "0.1"],
+    "noise_offset": ["0.1"],
+
+    "max_train_steps": ["1000"],
+    "save_every_n_steps": ["500"],
+    "sample_every_n_steps": ["500"],
     "gradient_accumulation_steps": ["1"],
     "seed": ["1"],  # Keeping this constant
     "MODEL_PATH": [
