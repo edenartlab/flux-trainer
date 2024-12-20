@@ -101,7 +101,7 @@ def construct_train_command(config: Dict[str, Any]) -> List[str]:
             "--network_module", "networks.lora_flux",
             "--network_dim", config['lora_rank'],
             "--optimizer_type", "adamw8bit",
-            #"--optimizer_args", "weight_decay=0.1", 
+            "--optimizer_args", "weight_decay=0.1", 
             "--learning_rate", config['learning_rate'],
             "--noise_offset", config['noise_offset'],
             "--noise_offset_random_strength",
@@ -136,13 +136,11 @@ def construct_train_command(config: Dict[str, Any]) -> List[str]:
 
 TODO:
 
-- test style training mode
+- test auto-caption with Florence2 + re-inject trigger text into prompt
 - run inference sample imgs at the end (vincent prompts)
 - add trigger word to output args
 
-
 args to test out from library/train_util.py:
-
 
 
 loss_type
