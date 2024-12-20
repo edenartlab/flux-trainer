@@ -184,7 +184,7 @@ def florence_caption_dataset(dataset_dir,
     
     Args:
         dataset_dir (str): Directory containing images to caption
-        caption_mode (str): Caption generation mode for Florence model
+        caption_mode (str): Caption generation mode for Florence model: <CAPTION> / <DETAILED_CAPTION> / <MORE_DETAILED_CAPTION>
         keep_existing_captions (bool): If True, skip images that already have captions
         florence_model_path (str): Path to store/load Florence model
         batch_size (int): Batch size for processing images
@@ -403,9 +403,6 @@ def clean_imgs_and_txt_files(source_data_directory, new_data_dir, error_dir, con
                 # Save the image as .jpg
                 new_filename = base_name + '.jpg'
                 new_file_path = os.path.join(new_data_dir, new_filename)
-                print("------------------------------------------------------------------")
-                print(f"Saving img to {new_file_path}")
-                print("------------------------------------------------------------------")
                 img.save(new_file_path, 'JPEG', quality=95)
                 total_imgs += 1
                 successful_images.add(base_name)  # Track successful image
