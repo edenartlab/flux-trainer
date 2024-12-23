@@ -1,7 +1,7 @@
 {
-    "dataset_path": "/data/xander/Projects/cog/GitHub_repos/flux-trainer/datasets/xander_captioned",
+    "dataset_path": "/data/xander/Projects/cog/GitHub_repos/flux-trainer/datasets/banny_best",
     "caption_mode": null,
-    "mode": "face",
+    "mode": "object",
     "caption_prefix": "a man named Xander Steenbrugge",
     "masking_prompt": "face",
     "dataset_toml": "template/dataset_template_512_bs4.toml",

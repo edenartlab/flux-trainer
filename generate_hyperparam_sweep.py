@@ -8,7 +8,7 @@ from tqdm import tqdm
 from datetime import datetime
 
 # Setup the base experiment config
-exp_name = "xander_civit_sweep"
+exp_name = "banny_civit_sweep"
 n_exp = 100  # how many random experiment settings to generate
 min_hamming_distance = 1  # min params that have to be different from previous experiments
 nohup = True
@@ -16,12 +16,12 @@ nohup = True
 # Define training hyperparameters and their possible values
 hyperparameters = {
     "dataset_path": [
-        "/data/xander/Projects/cog/GitHub_repos/flux-trainer/datasets/xander_captioned_mini"
+        "/data/xander/Projects/cog/GitHub_repos/flux-trainer/datasets/banny_best"
     ],
     "caption_mode": [None],
-    "mode": ["face"],
-    "caption_prefix": ["a man named Xander Steenbrugge"],
-    "masking_prompt": ["face"],
+    "mode": ["object"],
+    "caption_prefix": ["a yellow cartoon banana character, with expressive eyes, spotted skin and pink lips wearing a black spiked collar"],
+    "masking_prompt": ["a yellow banana character"],
     "dataset_toml": [
         #"template/dataset_template_512_bs1.toml",
         "template/dataset_template_512_bs4.toml"

@@ -17,7 +17,6 @@ from pymongo import MongoClient
 from dotenv import load_dotenv
 load_dotenv()
 
-
 MONGO_URI=os.getenv("MONGO_URI")
 MONGO_DB_NAME_STAGE=os.getenv("MONGO_DB_NAME_STAGE")
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
@@ -175,32 +174,134 @@ def upload_buffer(buffer, name=None, file_type=None, env="STAGE"):
     return file_url, name
 
 
-def create_thumbnail(sample_dir, env="STAGE"):
-    """Creates a thumbnail from a sample directory."""
+import os
+import random
+import tempfile
+from pathlib import Path
+from PIL import Image
+from typing import Optional, List, Tuple
+import logging
 
-    png_files = [f for f in os.listdir(sample_dir) if f.endswith('.png')]
+def create_thumbnail(
+    config: dict,
+    width: int = 1024,
+    height: int = 1024,
+    n_steps: int = 35,
+    n_imgs: int = 4,
+    env: str = "STAGE"
+) -> Optional[str]:
+    """
+    Creates a thumbnail grid with generated samples from the trainer LoRA.
     
-    if len(png_files) < 4:
-        print("Not enough sample images to create a 2x2 grid.")
+    Args:
+        config (dict): Configuration dictionary containing mode and output_dir
+        width (int): Width of each generated image
+        height (int): Height of each generated image
+        n_steps (int): Number of steps for generation
+        n_imgs (int): Number of images to generate (must be a perfect square)
+        env (str): Environment for upload ("STAGE" or "PROD")
+    
+    Returns:
+        Optional[str]: URL of the uploaded thumbnail grid image, or None if creation fails
+    
+    Raises:
+        ValueError: If n_imgs is not a perfect square or if config is invalid
+        FileNotFoundError: If required files or directories are missing
+    """
+    try:
+        # Validate inputs
+        grid_size = int(n_imgs ** 0.5)
+        if grid_size * grid_size != n_imgs:
+            raise ValueError(f"n_imgs ({n_imgs}) must be a perfect square")
+        
+        # Determine prompt file based on mode
+        prompt_files = {
+            "face": "template/grid_prompts_face.txt",
+            "object": "template/grid_prompts_object.txt",
+            "style": "template/grid_prompts_style.txt"
+        }
+        prompt_file = prompt_files.get(config["mode"])
+
+        # Create temporary directories and files with context managers
+        with tempfile.NamedTemporaryFile(mode='w', delete=False) as tmp_file:
+            # Sample and clean prompts
+            with open(prompt_file, 'r') as f:
+                prompt_samples = [p.strip() for p in f.readlines() if p.strip()]
+                
+            selected_prompts = random.sample(prompt_samples, n_imgs)
+            tmp_file.writelines(f"{p}\n" for p in selected_prompts)
+
+        # Create temporary directory for generated images
+        with tempfile.TemporaryDirectory() as sample_dir:
+            # Find most recent LoRA model
+            output_dir = Path(config["output_dir"])
+            safetensor_files = list(output_dir.glob("*.safetensors"))
+            lora_path = max(safetensor_files, key=lambda p: p.stat().st_mtime)
+
+            # Prepare generation command
+            cmd = [
+                "python", "lora_batch_eval.py",
+                "--ckpt_path", "models/flux1-dev.safetensors",
+                "--clip_l", "models/clip_l.safetensors",
+                "--t5xxl", "models/t5xxl_fp16.safetensors",
+                "--ae", "models/ae.safetensors",
+                "--prompt_file", tmp_file.name,
+                "--output_dir", sample_dir,
+                "--lora_path", str(lora_path),
+                "--offload",
+                "--merge_lora_weights",
+                "--steps", str(n_steps),
+                "--width", str(width),
+                "--height", str(height)
+            ]
+
+            # Run generation command (assuming subprocess.run is imported)
+            try:
+                import subprocess
+                result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+                logging.info(f"Generation command output: {result.stdout}")
+            except subprocess.CalledProcessError as e:
+                logging.error(f"Generation command failed: {e.stderr}")
+                raise
+
+            # Create image grid
+            png_files = list(Path(sample_dir).glob("*.png"))
+            sampled_files = random.sample(png_files, n_imgs)
+            images = [Image.open(f) for f in sampled_files]
+
+            # Calculate grid dimensions
+            grid_width = max(img.size[0] for img in images) * grid_size
+            grid_height = max(img.size[1] for img in images) * grid_size
+            grid_img = Image.new('RGB', (grid_width, grid_height))
+
+            # Place images in grid
+            for i, img in enumerate(images):
+                x = (i % grid_size) * width
+                y = (i // grid_size) * height
+                img = img.resize((width, height))
+                grid_img.paste(img, (x, y))
+
+            # Save and upload grid
+            grid_path = f"{sample_dir}_grid.png"
+            grid_img.save(grid_path)
+
+            try:
+                thumbnail_url, _ = upload_file(grid_path, env=env)
+                return thumbnail_url
+            except Exception as e:
+                logging.error(f"Failed to upload thumbnail: {e}")
+                raise
+
+    except Exception as e:
+        logging.error(f"Thumbnail creation failed: {e}")
         return None
-
-    sampled_files = random.sample(png_files, 4)
-    images = [Image.open(os.path.join(sample_dir, f)) for f in sampled_files]
-    img_size = images[0].size[0]
-    grid_img = Image.new('RGB', (img_size * 2, img_size * 2))
-
-    for i, img in enumerate(images):
-        img = img.resize((img_size, img_size))
-        grid_img.paste(img, ((i % 2) * img_size, (i // 2) * img_size))
-
-    grid_img.save(f"{sample_dir}.png")
-
-    thumbnail_url, _ = upload_file(
-        f"{sample_dir}.png",
-        env=env
-    )
-
-    return thumbnail_url
+    finally:
+        # Cleanup temporary files
+        if 'tmp_file' in locals():
+            try:
+                os.unlink(tmp_file.name)
+            except OSError:
+                pass
         
 
 def make_slug(task):
@@ -215,13 +316,8 @@ def make_slug(task):
     slug = f"{username}/{name}/v{version}"
     return slug
 
-def describe_image_concept(images_dir):
-    """Gets both a detailed and concise description of the main visual concept in a set of images."""
-    import os
-    import random
-    from openai import OpenAI
-    from pydantic import BaseModel
-    
+def describe_image_concept(images_dir, mode):
+    """Gets both a detailed and concise description of the main visual concept in a set of images."""    
     client = OpenAI()
     
     # Get the list of image files in the directory
@@ -247,7 +343,20 @@ def describe_image_concept(images_dir):
         }
         for image_path in selected_images
     ]
-    
+
+    if mode == "style":
+        gpt_task_description = """Provide two descriptions of the shared concept in these images:
+
+1. A detailed visual description of the shared style/aesthetic in these images of maximum 10 words. Always start with the main category of the images (cartoon, lineart sketch, painting, photograph, ...) followed by the key visual features (like colors, shapes, stylistic hints, ...) of the shared visual aesthetic, avoiding abstract words or interpretations. Your description should help someone generate a specific, representative example of the style.
+
+2. A more concise description (max 5 words) that captures just the essentials of the visual style."""
+    else:
+        gpt_task_description = """Provide two descriptions of the shared concept in these images:
+
+1. A detailed visual description of the shared concept (object / character / person / ...) in these images of maximum 10 words. Always start with the main category of the thing (man, character, car, ...) followed by the key visual features (like colors, shapes, accessories, expressions, style, ...) of the central subject, avoiding abstract words or interpretations. Your description should help someone generate a specific, representative example of the concept. Use precise, observable terms - for example, describe 'red' instead of 'colorful', 'standing upright' instead of 'positioned', 'wearing a blue hat' instead of 'accessorized'. Avoid describing actions, emotions or contexts. Ignore any aspect of the main concept that varies across examples (therefore never use words like 'or' or 'various' in the description), the goal is to create a clear mental picture of the archetypal instance of what's shown through a single description that captures the visual, common essence of the shared concept in the images.
+
+2. A concise description (max 5 words) that captures just the essential visual concept and will be used to generate masks through CLIPSegmentation."""
+
     response = client.beta.chat.completions.parse(
         model="gpt-4o",  # Using the correct vision model
         messages=[
@@ -260,11 +369,7 @@ def describe_image_concept(images_dir):
                 "content": [
                     {
                         "type": "text",
-                        "text": """Provide two descriptions of the shared concept in these images:
-
-1. A detailed visual description of the shared concept (object / character / person / ...) in these images of maximum 15 words. Always start with the main category of the thing (man, character, car, ...) followed by the key visual features (like colors, shapes, accessories, expressions, style, ...) of the central subject, avoiding abstract words or interpretations. Your description should help someone generate a specific, representative example of the concept. Use precise, observable terms - for example, describe 'red' instead of 'colorful', 'standing upright' instead of 'positioned', 'wearing a blue hat' instead of 'accessorized'. Avoid describing actions, emotions or contexts. Ignore any aspect of the main concept that varies across examples (therefore never use words like 'or' or 'various' in the description), the goal is to create a clear mental picture of the archetypal instance of what's shown through a single description that captures the visual, common essence of the shared concept in the images.
-
-2. A concise description (max 5 words) that captures just the essential visual concept and will be used to generate masks through CLIPSegmentation."""
+                        "text": gpt_task_description
                     },
                     *image_attachments
                 ],
@@ -338,9 +443,9 @@ def auto_detect_training_mode(images_dir, n_img_samples = 6):
                     {
                         "type": "text",
                         "text": """Look at the attached images and determine their primary content type (used for LoRA training mode):
-                        - Select 'face' if they mostly show picutres of one person/character's face
-                        - Select 'object' if they mostly show a specific object, character, or thing
-                        - Select 'style' if they mostly demonstrate a consistent artistic style or aesthetic across diverse subjects or scenes"""
+                        - Select 'face' if they mostly show pictures of the same person/character's face and the face is the primary thing that remains consistent across images.
+                        - Select 'object' if they mostly show a specific object, character, or thing. Character mode should be prefered over 'face' if the entire body of the character should be learned.
+                        - Select 'style' if they mostly demonstrate a consistent artistic style or aesthetic across diverse subjects or scenes. This mode disables segmentation masks and learns from all the pixels in the images instead of just the main foreground subject."""
                     },
                     *image_attachments
                 ],            

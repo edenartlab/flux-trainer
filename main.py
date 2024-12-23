@@ -138,11 +138,22 @@ def construct_train_command(config: Dict[str, Any]) -> List[str]:
 
 TODO:
 
-- modify to have automatic style description tag
 - caption with joycaption
 - test auto-caption with Florence2 + re-inject trigger text into prompt
+- add automatic dataset augmentation on start
+
+urgent:
+- modify to have automatic style description tag
+- style token trigger: "in the style of TOK" / "TOK"
+
+
+Done but to be tested:
 - run inference sample imgs at the end (vincent prompts)
 - add trigger word to output args
+
+
+
+
 
 args to test out from library/train_util.py:
 

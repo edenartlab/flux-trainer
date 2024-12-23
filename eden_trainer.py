@@ -67,7 +67,7 @@ def main():
         download_dataset(config["dataset_path"], task_args["lora_training_urls"])
         
         # Use GPT4v to check if the dataset is a face or style
-        if not config.get("mode"):
+        if not config.get("mode") or config.get("mode") == "auto":
             config["mode"] = eden_utils.auto_detect_training_mode(config["dataset_path"])
 
         # Preprocess the dataset:
@@ -79,15 +79,17 @@ def main():
 
         # upload to eden
         file_url, _ = eden_utils.upload_file(
-            f"{config["output_dir"]}/{config["output_name"]}.safetensors",
+            f"{config['output_dir']}/{config['output_name']}.safetensors",
             env=args.env
         )
         print("file_url", file_url)
 
         # make thumbnail and slug
-        sample_dir = os.path.join(config["output_dir"], "sample")
-        thumbnail_url = eden_utils.create_thumbnail(sample_dir, env=args.env)
+        #sample_dir = os.path.join(config["output_dir"], "sample")
+        thumbnail_url = eden_utils.create_thumbnail(config, env=args.env)
         # slug = eden_utils.make_slug(task)
+
+        print(f"Thumbnail URL: {thumbnail_url}")
 
         # save model
         model_id = eden_utils.models_collection.insert_one({

@@ -36,8 +36,8 @@ def construct_toml(config: Dict[str, Any]) -> Dict[str, Any]:
             if 'subsets' in dataset:
                 for subset in dataset['subsets']:
                     subset['image_dir'] = config['dataset_path']
-                    #if config["caption_prefix"]:
-                    #    subset['caption_prefix'] = config["caption_prefix"]
+                    if config["caption_prefix"]:
+                        subset['caption_prefix'] = config["caption_prefix"]
 
     logging.info(f"All instances of 'image_dir' in dataset.toml updated to: {config['dataset_path']}")
     
@@ -425,6 +425,18 @@ def clean_imgs_and_txt_files(source_data_directory, new_data_dir, error_dir, con
 
     return config
 
+def remove_vowels(text):
+    # Return None if input is None
+    if text is None:
+        return None
+        
+    # Handle empty string
+    if text == "":
+        return ""
+        
+    vowels = 'aeiouAEIOU'
+    return ''.join(char for char in text if char not in vowels)
+
 def prep_dataset(config):
     new_data_root_dir = os.path.join(config["output_dir"], "dataset")
     new_data_dir = os.path.join(new_data_root_dir, "images")
@@ -440,7 +452,7 @@ def prep_dataset(config):
     if config.get("caption_mode"):
         florence_caption_dataset(config["dataset_path"], caption_mode=config["caption_mode"])
     
-    if (not config.get("caption_prefix") or not config.get("masking_prompt")) and config["mode"] != "style":
+    if (not config.get("caption_prefix") or not config.get("masking_prompt")):
         gpt_caption_prefix, gpt_masking_prompt = describe_image_concept(new_data_dir)
         if not config.get("caption_prefix"):
             config["caption_prefix"] = gpt_caption_prefix
@@ -450,10 +462,11 @@ def prep_dataset(config):
     if config["mode"] == "face":  # set masking prompt to "face" for face mode
         config["masking_prompt"] = "face"
     if config["mode"] == "style": # disable prefix and masking for style transfer
-        #config["caption_prefix"] = ""
         config["masking_prompt"] = ""
-        #gpt_caption_prefix = describe_image_style(new_data_dir)
 
+    # custom hack / trick: generate unique trigger text from the descriptions by just removing vowels:
+    config["caption_prefix"] = remove_vowels(config["caption_prefix"])
+    
     # Inject trigger text into each caption:
     # cleanup_prompts_with_chatgpt(gpt_caption_prefix, config["dataset_path"], config["caption_mode"], config["seed"])
 
