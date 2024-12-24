@@ -138,8 +138,12 @@ def construct_train_command(config: Dict[str, Any]) -> List[str]:
 
 TODO:
 
-- caption with joycaption
-- test auto-caption with Florence2 + re-inject trigger text into prompt
+
+later:
+- test out better segmentation models for masking: https://github.com/microsoft/X-Decoder or https://github.com/IDEA-Research/OpenSeeD 
+
+
+- caption with gpt4v
 - add automatic dataset augmentation on start
 
 urgent:
@@ -178,7 +182,7 @@ def run_trainer(args, verbose = True):
         download_dataset(config["dataset_path"], [args.dataset_url])
 
     # Step 3: Prepare dataset:
-    config = prep_dataset(config) 
+    config = prep_dataset(config)
 
     # Step 4: Construct and run the training command
     cmd = construct_train_command(config)

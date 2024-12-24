@@ -52,11 +52,39 @@ def main():
         # Override args
         with open(args.config, 'r') as f:
             config_json = json.load(f)
-        config_json["lora_rank"] = str(task_args["lora_rank"])
-        config_json["learning_rate"] = str(task_args["learning_rate"])
-        config_json["seed"] = str(task_args.get("seed", random.randint(0, 2147483648)))
-        config_json["max_train_steps"] = str(task_args["max_train_steps"])
-        config_json["caption_prefix"] = task_args.get("caption_prefix", config_json.get("caption_prefix", "TOK"))
+
+        # Update config_json with all values from task_args
+        for key, value in task_args.items():
+            # Convert all values to strings, handle seed specially
+            if key == "seed" and value is None:
+                config_json[key] = str(random.randint(0, 2147483648))
+            else:
+                config_json[key] = str(value)
+
+        overwrite_dict = {
+            "caption_prefix": "",
+            "dataset_toml": "template/dataset_template_512_bs1.toml",
+            "eval_prompts": "template/eval_prompts_TOK.txt",
+            "full_finetune": False,
+            "sample_at_first": False,
+            "lora_rank": "4",
+            "network_alpha": "16",
+            "learning_rate": "0.5e-4",
+            "max_train_steps": "10",
+            "save_every_n_steps": "5",
+            "sample_every_n_steps": "200",
+            "gradient_accumulation_steps": "1",
+            "noise_offset": "0.1",
+            "ip_noise_gamma": "0.1",
+            "MODEL_PATH": "models/flux-dev-de-distill-diffusers" }
+
+        # Update config_json with overwrite_dict values
+        for key, value in overwrite_dict.items():
+            config_json[key] = value
+
+        print(f"Final training arguments for job:")
+        print(config_json)
+
         with open("tmp_train_config.json", 'w') as f:
             json.dump(config_json, f, indent=2)
 
@@ -77,6 +105,10 @@ def main():
         cmd = construct_train_command(config)
         run_job(cmd, config)
 
+        # make thumbnail: 
+        thumbnail_url = eden_utils.create_thumbnail(config, env=args.env)
+        print(f"Thumbnail URL: {thumbnail_url}")
+
         # upload to eden
         file_url, _ = eden_utils.upload_file(
             f"{config['output_dir']}/{config['output_name']}.safetensors",
@@ -84,12 +116,8 @@ def main():
         )
         print("file_url", file_url)
 
-        # make thumbnail and slug
-        #sample_dir = os.path.join(config["output_dir"], "sample")
-        thumbnail_url = eden_utils.create_thumbnail(config, env=args.env)
+        # make slug
         # slug = eden_utils.make_slug(task)
-
-        print(f"Thumbnail URL: {thumbnail_url}")
 
         # save model
         model_id = eden_utils.models_collection.insert_one({

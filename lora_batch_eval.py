@@ -1,12 +1,13 @@
 # Minimum Inference Code for FLUX
 # add kohya scripts to path:
+
 import sys
-sys.path.append("sd-scripts")
+import os
+import importlib.util
 
 import argparse
 import datetime
 import math
-import os
 import random
 from typing import Callable, List, Optional
 import einops
@@ -20,199 +21,27 @@ import accelerate
 from transformers import CLIPTextModel
 from safetensors.torch import load_file
 
-from library import device_utils
-from library.device_utils import init_ipex, get_preferred_device
-from networks import oft_flux
 from typing import List, Dict, Optional
 from pathlib import Path
-init_ipex()
 
-
-from library.utils import setup_logging, str_to_dtype
-
-setup_logging()
 import logging
 
 logger = logging.getLogger(__name__)
 
-import networks.lora_flux as lora_flux
-from library import flux_models, flux_utils, sd3_utils, strategy_flux
+# add kohya sd-scripts to path:
+current_file_directory = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.join(current_file_directory, "sd-scripts"))
 
 from minimal_inference_utils import *
+import networks.lora_flux as lora_flux
+from library import flux_models, flux_utils, sd3_utils, strategy_flux
+from library.utils import setup_logging, str_to_dtype
+from library import device_utils
+from library.device_utils import init_ipex, get_preferred_device
+from networks import oft_flux
 
-def generate_image_old(
-    model,
-    clip_l: CLIPTextModel,
-    t5xxl,
-    ae,
-    prompt: str,
-    seed: Optional[int],
-    image_width: int,
-    image_height: int,
-    steps: Optional[int],
-    guidance: float,
-    negative_prompt: Optional[str],
-    cfg_scale: float,
-):
-    seed = seed if seed is not None else random.randint(0, 2**32 - 1)
-    logger.info(f"Seed: {seed}")
-
-    # make first noise with packed shape
-    # original: b,16,2*h//16,2*w//16, packed: b,h//16*w//16,16*2*2
-    packed_latent_height, packed_latent_width = math.ceil(image_height / 16), math.ceil(image_width / 16)
-    noise_dtype = torch.float32 if is_fp8(dtype) else dtype
-    noise = torch.randn(
-        1,
-        packed_latent_height * packed_latent_width,
-        16 * 2 * 2,
-        device=device,
-        dtype=noise_dtype,
-        generator=torch.Generator(device=device).manual_seed(seed),
-    )
-
-    img_ids = flux_utils.prepare_img_ids(1, packed_latent_height, packed_latent_width)
-
-    # prepare fp8 models
-    if is_fp8(clip_l_dtype) and (not hasattr(clip_l, "fp8_prepared") or not clip_l.fp8_prepared):
-        logger.info(f"prepare CLIP-L for fp8: set to {clip_l_dtype}, set embeddings to {torch.bfloat16}")
-        clip_l.to(clip_l_dtype)  # fp8
-        clip_l.text_model.embeddings.to(dtype=torch.bfloat16)
-        clip_l.fp8_prepared = True
-
-    if is_fp8(t5xxl_dtype) and (not hasattr(t5xxl, "fp8_prepared") or not t5xxl.fp8_prepared):
-        logger.info(f"prepare T5xxl for fp8: set to {t5xxl_dtype}")
-
-        def prepare_fp8(text_encoder, target_dtype):
-            def forward_hook(module):
-                def forward(hidden_states):
-                    hidden_gelu = module.act(module.wi_0(hidden_states))
-                    hidden_linear = module.wi_1(hidden_states)
-                    hidden_states = hidden_gelu * hidden_linear
-                    hidden_states = module.dropout(hidden_states)
-
-                    hidden_states = module.wo(hidden_states)
-                    return hidden_states
-
-                return forward
-
-            for module in text_encoder.modules():
-                if module.__class__.__name__ in ["T5LayerNorm", "Embedding"]:
-                    # print("set", module.__class__.__name__, "to", target_dtype)
-                    module.to(target_dtype)
-                if module.__class__.__name__ in ["T5DenseGatedActDense"]:
-                    # print("set", module.__class__.__name__, "hooks")
-                    module.forward = forward_hook(module)
-
-        t5xxl.to(t5xxl_dtype)
-        prepare_fp8(t5xxl.encoder, torch.bfloat16)
-        t5xxl.fp8_prepared = True
-
-    # prepare embeddings
-    logger.info("Encoding prompts...")
-    clip_l = clip_l.to(device)
-    t5xxl = t5xxl.to(device)
-
-    def encode(prpt: str):
-        tokens_and_masks = tokenize_strategy.tokenize(prpt)
-        with torch.no_grad():
-            if is_fp8(clip_l_dtype):
-                with accelerator.autocast():
-                    l_pooled, _, _, _ = encoding_strategy.encode_tokens(tokenize_strategy, [clip_l, None], tokens_and_masks)
-            else:
-                with torch.autocast(device_type=device.type, dtype=clip_l_dtype):
-                    l_pooled, _, _, _ = encoding_strategy.encode_tokens(tokenize_strategy, [clip_l, None], tokens_and_masks)
-
-            if is_fp8(t5xxl_dtype):
-                with accelerator.autocast():
-                    _, t5_out, txt_ids, t5_attn_mask = encoding_strategy.encode_tokens(
-                        tokenize_strategy, [clip_l, t5xxl], tokens_and_masks, args.apply_t5_attn_mask
-                    )
-            else:
-                with torch.autocast(device_type=device.type, dtype=t5xxl_dtype):
-                    _, t5_out, txt_ids, t5_attn_mask = encoding_strategy.encode_tokens(
-                        tokenize_strategy, [None, t5xxl], tokens_and_masks, args.apply_t5_attn_mask
-                    )
-        return l_pooled, t5_out, txt_ids, t5_attn_mask
-
-    l_pooled, t5_out, txt_ids, t5_attn_mask = encode(prompt)
-    if negative_prompt:
-        neg_l_pooled, neg_t5_out, _, neg_t5_attn_mask = encode(negative_prompt)
-    else:
-        neg_l_pooled, neg_t5_out, neg_t5_attn_mask = None, None, None
-
-    # NaN check
-    if torch.isnan(l_pooled).any():
-        raise ValueError("NaN in l_pooled")
-    if torch.isnan(t5_out).any():
-        raise ValueError("NaN in t5_out")
-
-    if args.offload:
-        clip_l = clip_l.cpu()
-        t5xxl = t5xxl.cpu()
-    # del clip_l, t5xxl
-    device_utils.clean_memory()
-
-    # generate image
-    logger.info("Generating image...")
-    model = model.to(device)
-    if steps is None:
-        steps = 4 if is_schnell else 50
-
-    img_ids = img_ids.to(device)
-    t5_attn_mask = t5_attn_mask.to(device) if args.apply_t5_attn_mask else None
-
-    x = do_sample(
-        accelerator,
-        model,
-        noise,
-        img_ids,
-        l_pooled,
-        t5_out,
-        txt_ids,
-        steps,
-        guidance,
-        t5_attn_mask,
-        is_schnell,
-        device,
-        flux_dtype,
-        neg_l_pooled,
-        neg_t5_out,
-        neg_t5_attn_mask,
-        cfg_scale,
-    )
-    if args.offload:
-        model = model.cpu()
-    # del model
-    device_utils.clean_memory()
-
-    # unpack
-    x = x.float()
-    x = einops.rearrange(x, "b (h w) (c ph pw) -> b c (h ph) (w pw)", h=packed_latent_height, w=packed_latent_width, ph=2, pw=2)
-
-    # decode
-    logger.info("Decoding image...")
-    ae = ae.to(device)
-    with torch.no_grad():
-        if is_fp8(ae_dtype):
-            with accelerator.autocast():
-                x = ae.decode(x)
-        else:
-            with torch.autocast(device_type=device.type, dtype=ae_dtype):
-                x = ae.decode(x)
-    if args.offload:
-        ae = ae.cpu()
-
-    x = x.clamp(-1, 1)
-    x = x.permute(0, 2, 3, 1)
-    img = Image.fromarray((127.5 * (x + 1.0)).float().cpu().numpy().astype(np.uint8)[0])
-
-    # save image
-    output_dir = args.output_dir
-    os.makedirs(output_dir, exist_ok=True)
-    output_path = os.path.join(output_dir, f"{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.png")
-    img.save(output_path)
-
-    logger.info(f"Saved image to {output_path}")
+init_ipex()
+setup_logging()
 
 def encode_prompts(
     clip_l: CLIPTextModel,
@@ -415,7 +244,7 @@ def generate_images(
 
 
 def load_flux(args, device):
-    print("Loading FLUX from disk...")
+    logger.info("Loading FLUX from disk...")
     loading_device = "cpu" if args.offload else device
     
     # load clip_l
@@ -428,6 +257,12 @@ def load_flux(args, device):
     t5xxl.eval()
 
     # DiT
+
+    # print contents of model dir:
+    logger.info(f"Contents of parent dir of {args.ckpt_path}:")
+    for item in os.listdir(os.path.dirname(args.ckpt_path)):
+        logger.info(f"  - {item}")
+
     is_schnell, model = flux_utils.load_flow_model(args.ckpt_path, None, loading_device)
     model.eval()
     logger.info(f"Casting model to {flux_dtype}")

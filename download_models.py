@@ -8,6 +8,9 @@ from unittest.mock import patch
 from transformers.dynamic_module_utils import get_imports
 from transformers import AutoProcessor, AutoModelForCausalLM 
 
+from utils import clipseg_mask_generator
+from PIL import Image
+
 def fixed_get_imports(filename: str | os.PathLike) -> list[str]:
     if not str(filename).endswith("modeling_florence2.py"):
         return get_imports(filename)
@@ -25,6 +28,13 @@ def download_florence(models_dir):
         model = AutoModelForCausalLM.from_pretrained("microsoft/Florence-2-large", attn_implementation="sdpa", device_map=device, torch_dtype=torch_dtype, trust_remote_code=True, cache_dir=models_dir)
             
     processor = AutoProcessor.from_pretrained("microsoft/Florence-2-large", trust_remote_code=True, cache_dir=models_dir)
+
+@torch.no_grad()
+def download_clipseg(models_dir):
+    print("Downloading clipseg...", flush=True)
+    # make a random dummy pil image:
+    dummy_pil_image_list = [Image.new('RGB', (512, 512))]
+    dummy_mask = clipseg_mask_generator(dummy_pil_image_list, ["test"])
 
 def run_command(command):
     """Execute a command and return its output and error status"""
@@ -54,6 +64,7 @@ def download_flux(models_dir):
     # List of models and paths to download
     models_to_download = [
         ('black-forest-labs/FLUX.1-dev', 'ae.safetensors'),
+        ('black-forest-labs/FLUX.1-dev', 'flux1-dev.safetensors'),
         ('comfyanonymous/flux_text_encoders', 'clip_l.safetensors'),
         ('comfyanonymous/flux_text_encoders', 't5xxl_fp16.safetensors')
     ]
@@ -89,5 +100,6 @@ def download_flux(models_dir):
 if __name__ == "__main__":
     models_dir = "./models"
     os.makedirs(models_dir, exist_ok=True)
+    download_clipseg(models_dir)
     download_florence(models_dir)
     download_flux(models_dir)

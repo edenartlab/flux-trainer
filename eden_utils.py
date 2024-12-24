@@ -15,6 +15,11 @@ from typing import Iterator
 from PIL import Image
 from pymongo import MongoClient
 from dotenv import load_dotenv
+
+from pathlib import Path
+from typing import Optional, List, Tuple
+import logging
+
 load_dotenv()
 
 MONGO_URI=os.getenv("MONGO_URI")
@@ -86,6 +91,32 @@ def image_to_base64(file_path, max_size):
     data = base64.b64encode(img_bytes).decode("utf-8")
     return data
 
+def prep_img_for_gpt_api(image, max_size=(512, 512)):
+    """Prepare image for GPT-4 Vision API by resizing and converting to base64."""
+    if isinstance(image, str):
+        img = Image.open(image)
+    else:
+        img = image
+    
+    # Resize image while maintaining aspect ratio
+    img.thumbnail(max_size)
+    
+    # Convert to JPEG and then to base64
+    buffer = io.BytesIO()
+    img.save(buffer, format="JPEG")
+    return base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+def make_slug(task):
+    """Makes a slug from a task."""
+
+    task_args = task["args"]
+    name = task_args["name"].lower().replace(" ", "-")
+    existing_docs = list(models_collection.find({"name": name, "user": task["user"]}))
+    versions = [int(doc.get('slug', '').split('/')[-1][1:]) for doc in existing_docs if doc.get('slug')]
+    version = max(versions or [0]) + 1
+    username = users_collection.find_one({"_id": task["user"]})["username"]
+    slug = f"{username}/{name}/v{version}"
+    return slug
 
 def get_root_url(env="STAGE"):
     """Returns the root URL for the specified bucket."""
@@ -173,15 +204,6 @@ def upload_buffer(buffer, name=None, file_type=None, env="STAGE"):
 
     return file_url, name
 
-
-import os
-import random
-import tempfile
-from pathlib import Path
-from PIL import Image
-from typing import Optional, List, Tuple
-import logging
-
 def create_thumbnail(
     config: dict,
     width: int = 1024,
@@ -237,6 +259,8 @@ def create_thumbnail(
             output_dir = Path(config["output_dir"])
             safetensor_files = list(output_dir.glob("*.safetensors"))
             lora_path = max(safetensor_files, key=lambda p: p.stat().st_mtime)
+
+            print(f"Generating validation grid of {n_imgs} imgs with {lora_path}")
 
             # Prepare generation command
             cmd = [
@@ -302,19 +326,92 @@ def create_thumbnail(
                 os.unlink(tmp_file.name)
             except OSError:
                 pass
+
+
+def gpt4_v_caption_dataset(
+    images, 
+    captions, 
+    batch_size=4
+):
+    """
+    Generate captions for a dataset of images using GPT-4 Vision.
+    
+    Args:
+        images: List of image paths or PIL Images
+        captions: List of existing captions (None for images that need captions)
+        batch_size: Number of concurrent API requests
+        prompt: Custom prompt for the captioning task
         
+    Returns:
+        List of captions
+    """
 
-def make_slug(task):
-    """Makes a slug from a task."""
+    prompt="""Concisely describe this image without assumptions with at most 20 words. Don't start with statements like 'The image features...', just describe what you see. The description is a dataset caption that will be used for training a generative model (FLUX)."""
 
-    task_args = task["args"]
-    name = task_args["name"].lower().replace(" ", "-")
-    existing_docs = list(models_collection.find({"name": name, "user": task["user"]}))
-    versions = [int(doc.get('slug', '').split('/')[-1][1:]) for doc in existing_docs if doc.get('slug')]
-    version = max(versions or [0]) + 1
-    username = users_collection.find_one({"_id": task["user"]})["username"]
-    slug = f"{username}/{name}/v{version}"
-    return slug
+    client = OpenAI()
+
+    class ImageCaption(BaseModel):
+        """Caption for a single image."""
+        caption: str
+    
+    def process_single_image(index, image):
+        """Process a single image and return its caption."""
+        try:
+            # Convert image to base64
+            base64_image = prep_img_for_gpt_api(image)
+            
+            # Prepare the API request
+            response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": prompt},
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/jpeg;base64,{base64_image}",
+                                    "detail": "low"
+                                }
+                            }
+                        ]
+                    }
+                ],
+                max_tokens=100,
+                response_format={ "type": "json_object" }
+            )
+            
+            # Parse the response
+            result = ImageCaption.parse_raw(response.choices[0].message.content)
+            caption = result.caption.strip().rstrip('.').rstrip(',')
+            
+            return index, caption
+            
+        except Exception as e:
+            print(f"Error processing image {index}: {str(e)}")
+            return index, None
+    
+    # Process images in parallel
+    with concurrent.futures.ThreadPoolExecutor(max_workers=batch_size) as executor:
+        # Only process images that don't have captions
+        future_to_index = {
+            executor.submit(process_single_image, i, img): i 
+            for i, img in enumerate(images) 
+            if captions[i] is None
+        }
+        
+        # Collect results as they complete
+        for future in concurrent.futures.as_completed(future_to_index):
+            index = future_to_index[future]
+            try:
+                idx, caption = future.result()
+                captions[idx] = caption
+                print(f"Caption {idx + 1}/{len(images)}: {caption}")
+            except Exception as exc:
+                print(f"Caption generation for image {index + 1} failed with exception: {exc}")
+    
+    return captions
 
 def describe_image_concept(images_dir, mode):
     """Gets both a detailed and concise description of the main visual concept in a set of images."""    
@@ -402,7 +499,6 @@ def auto_detect_training_mode(images_dir, n_img_samples = 6):
     image_files = [os.path.join(images_dir, f) for f in image_files if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tiff'))]
     n = min(n_img_samples, len(image_files))
     selected_images = random.sample(image_files, n)
-    print("Analyzing images for training mode:", selected_images)
 
     class ImageAnalysis(BaseModel):
         """
@@ -455,6 +551,6 @@ def auto_detect_training_mode(images_dir, n_img_samples = 6):
     )
 
     mode = response.choices[0].message.parsed.mode
-    print(f"Detected training mode: {mode}")
+    print(f"--- Detected training mode: {mode}")
     
     return mode

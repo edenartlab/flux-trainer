@@ -319,6 +319,7 @@ def clipseg_mask_generator(
     device=torch.device("cuda" if torch.cuda.is_available() else "cpu"),
     bias: float = 0.0,
     temp: float = 0.75,
+    cache_dir="./models",
     **kwargs,
 ) -> List[Image.Image]:
     """
@@ -331,8 +332,8 @@ def clipseg_mask_generator(
 
     model = None
     if any(target_prompts):
-        processor = CLIPSegProcessor.from_pretrained(model_id) #, cache_dir = model_paths.get_path("CLIP"))
-        model = CLIPSegForImageSegmentation.from_pretrained(model_id) #, cache_dir = model_paths.get_path("CLIP")
+        processor = CLIPSegProcessor.from_pretrained(model_id, cache_dir=cache_dir)
+        model = CLIPSegForImageSegmentation.from_pretrained(model_id, cache_dir=cache_dir)
         model = model.to(device)
 
     masks = []
@@ -450,10 +451,13 @@ def prep_dataset(config):
 
     # Perform dataset captioning if enabled in the config
     if config.get("caption_mode"):
-        florence_caption_dataset(config["dataset_path"], caption_mode=config["caption_mode"])
+        if config.get("caption_mode") == "gpt":
+            gpt4_v_caption_dataset(config["dataset_path"], caption_mode=config["caption_mode"])
+        else:
+            florence_caption_dataset(config["dataset_path"], caption_mode=config["caption_mode"])
     
     if (not config.get("caption_prefix") or not config.get("masking_prompt")):
-        gpt_caption_prefix, gpt_masking_prompt = describe_image_concept(new_data_dir)
+        gpt_caption_prefix, gpt_masking_prompt = describe_image_concept(new_data_dir, config["caption_mode"])
         if not config.get("caption_prefix"):
             config["caption_prefix"] = gpt_caption_prefix
         if not config.get("masking_prompt"):

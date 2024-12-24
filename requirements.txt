@@ -10,3 +10,4 @@ python-magic
 openai
 pymongo
 python-dotenv
+pydantic
