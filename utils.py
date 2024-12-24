@@ -13,8 +13,6 @@ from PIL import Image
 import shutil
 from pathlib import Path
 
-from eden_utils import describe_image_concept
-
 def path_to_str(obj: Any) -> Any:
     """Convert Path objects to strings."""
     if isinstance(obj, Path):
@@ -52,33 +50,6 @@ def construct_toml(config: Dict[str, Any]) -> Dict[str, Any]:
     config["dataset_config"] = str(toml_file_path)
 
     return config
-
-def create_sample_prompts(config):
-    """
-    Create the sample prompts for evaluation.
-    Replace any occurence of "TOK" with the "caption_prefix" from the config.
-    """
-    new_text_lines = []
-    # load the source prompts:
-    with open(config['eval_prompts'], 'r') as f:
-        text_lines = f.readlines()
-        for line in text_lines:
-            prompt = line
-            if config["caption_prefix"]:
-                if "TOK" in prompt:
-                    prompt = prompt.replace("TOK", config["caption_prefix"])
-                else:
-                    prompt = config["caption_prefix"] + " " + prompt
-            new_text_lines.append(prompt)
-            
-    # save the new prompts:
-    eval_prompts_path = Path(config["output_dir"]) / "eval_prompts.txt"
-    with open(eval_prompts_path, 'w') as f:
-        f.writelines(new_text_lines)
-
-    config["eval_prompts"] = str(eval_prompts_path)
-    return config
-
 
 def construct_config(config_path: str) -> Dict[str, Any]:
     """Construct and update the configuration dictionary."""
@@ -122,258 +93,33 @@ def run_job(cmd: List[str], config: Dict[str, Any]) -> None:
         logging.error(f"Error in run_job: {str(e)}")
         raise
 
-#workaround for unnecessary flash_attn requirement
-from unittest.mock import patch
-from transformers.dynamic_module_utils import get_imports
-from transformers import AutoProcessor, AutoModelForCausalLM 
-
-def fixed_get_imports(filename: str | os.PathLike) -> list[str]:
-    if not str(filename).endswith("modeling_florence2.py"):
-        return get_imports(filename)
-    imports = get_imports(filename)
-    try:
-        imports.remove("flash_attn")
-    except:
-        pass
-    return imports
-
-def get_image_paths(dataset_dir, skip_captioned=True):
+def create_sample_prompts(config):
     """
-    Get paths to images in dataset_dir. Optionally skip images that already have captions.
-    
-    Args:
-        dataset_dir (str): Directory containing images and captions
-        skip_captioned (bool): If True, skip images that already have matching .txt files
-        
-    Returns:
-        tuple: (image_paths, caption_paths) if skip_captioned=True, else just image_paths
+    Create the sample prompts for evaluation.
+    Replace any occurence of "TOK" with the trigger_text from the config.
     """
-    image_paths = []
-    caption_paths = []
-    existing_captions = set()
+    new_text_lines = []
+    # load the source prompts:
+    with open(config['eval_prompts'], 'r') as f:
+        text_lines = f.readlines()
+        for line in text_lines:
+            prompt = line
+            if config["caption_prefix"]:
+                if "TOK" in prompt:
+                    prompt = prompt.replace("TOK", config["caption_prefix"])
+                else:
+                    prompt = config["caption_prefix"] + " " + prompt
+            new_text_lines.append(prompt)
+            
+    # save the new prompts:
+    eval_prompts_path = Path(config["output_dir"]) / "eval_prompts.txt"
+    with open(eval_prompts_path, 'w') as f:
+        f.writelines(new_text_lines)
 
-    # First collect all caption files if we need to skip them
-    if skip_captioned:
-        for root, _, files in os.walk(dataset_dir):
-            for file in sorted(files):
-                if file.lower().endswith('.txt'):
-                    caption_paths.append(os.path.join(root, file))
-                    existing_captions.add(os.path.splitext(file)[0])
+    config["eval_prompts"] = str(eval_prompts_path)
+    return config
 
-    # Then collect image files
-    for root, _, files in os.walk(dataset_dir):
-        for file in sorted(files):
-            if file.lower().endswith(('.jpg', '.jpeg', '.png')):
-                basename = os.path.splitext(file)[0]
-                if not skip_captioned or basename not in existing_captions:
-                    image_paths.append(os.path.join(root, file))
-    
-    return (image_paths, caption_paths) if skip_captioned else image_paths
-
-device = "cuda:0" if torch.cuda.is_available() else "cpu"
-torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
-
-@torch.no_grad()
-def florence_caption_dataset(dataset_dir, 
-        caption_mode="<CAPTION>",
-        keep_existing_captions=True,
-        florence_model_path="./models",
-        batch_size=1):
-    """
-    Generate captions for images using Florence-2 model.
-    
-    Args:
-        dataset_dir (str): Directory containing images to caption
-        caption_mode (str): Caption generation mode for Florence model: <CAPTION> / <DETAILED_CAPTION> / <MORE_DETAILED_CAPTION>
-        keep_existing_captions (bool): If True, skip images that already have captions
-        florence_model_path (str): Path to store/load Florence model
-        batch_size (int): Batch size for processing images
-    """
-    # Get paths to process
-    if keep_existing_captions:
-        image_paths, caption_paths = get_image_paths(dataset_dir, skip_captioned=True)
-        print(f"Found {len(image_paths)} images without captions")
-        print(f"Found {len(caption_paths)} existing captions to preserve")
-    else:
-        image_paths = get_image_paths(dataset_dir, skip_captioned=False)
-        print(f"Processing all {len(image_paths)} images")
-
-    if not image_paths:
-        print("No images to caption.")
-        return
-
-    # Load model and processor
-    os.makedirs(florence_model_path, exist_ok=True)
-    with patch("transformers.dynamic_module_utils.get_imports", fixed_get_imports):
-        model = AutoModelForCausalLM.from_pretrained(
-            "microsoft/Florence-2-large",
-            attn_implementation="sdpa",
-            device_map=device,
-            torch_dtype=torch_dtype,
-            trust_remote_code=True,
-            cache_dir=florence_model_path
-        )
-    processor = AutoProcessor.from_pretrained(
-        "microsoft/Florence-2-large",
-        trust_remote_code=True,
-        cache_dir=florence_model_path
-    )
-
-    # Process images in batches
-    for i in tqdm(range(0, len(image_paths), batch_size)):
-        batch_paths = image_paths[i:i+batch_size]
-        batch_images = [Image.open(path).convert("RGB") for path in batch_paths]
-        
-        # Generate captions
-        inputs = processor(
-            text=[caption_mode] * len(batch_images),
-            images=batch_images,
-            return_tensors="pt",
-            padding=True
-        ).to(device, torch_dtype)
-        
-        generated_ids = model.generate(
-            input_ids=inputs["input_ids"],
-            pixel_values=inputs["pixel_values"],
-            max_new_tokens=1024,
-            num_beams=4
-        )
-
-        # Process and save captions
-        generated_texts = processor.batch_decode(generated_ids, skip_special_tokens=False)
-        parsed_answers = [
-            processor.post_process_generation(text, task=caption_mode, image_size=(img.width, img.height))
-            for text, img in zip(generated_texts, batch_images)
-        ]
-        
-        for path, parsed_answer in zip(batch_paths, parsed_answers):
-            caption = parsed_answer[caption_mode].replace("<pad>", "").replace("The image shows a ", "A ")
-            caption_path = f"{os.path.splitext(path)[0]}.txt"
-            with open(caption_path, "w") as f:
-                f.write(caption)
-
-    # Cleanup
-    model.to('cpu')
-    del model, processor
-    gc.collect()
-    torch.cuda.empty_cache()
-
-    return
-
-
-def load_image_with_orientation(path, mode="RGB"):
-    image = Image.open(path)
-
-    # Try to get the Exif orientation tag (0x0112), if it exists
-    try:
-        exif_data = image._getexif()
-        orientation = exif_data.get(0x0112)
-    except (AttributeError, KeyError, IndexError):
-        orientation = None
-
-    # Apply the orientation, if it's present
-    if orientation:
-        if orientation == 2:
-            image = image.transpose(Image.FLIP_LEFT_RIGHT)
-        elif orientation == 3:
-            image = image.rotate(180, expand=True)
-        elif orientation == 4:
-            image = image.transpose(Image.FLIP_TOP_BOTTOM)
-        elif orientation == 5:
-            image = image.rotate(-90, expand=True).transpose(Image.FLIP_LEFT_RIGHT)
-        elif orientation == 6:
-            image = image.rotate(-90, expand=True)
-        elif orientation == 7:
-            image = image.rotate(90, expand=True).transpose(Image.FLIP_LEFT_RIGHT)
-        elif orientation == 8:
-            image = image.rotate(90, expand=True)
-
-    if image.mode == 'P':
-        image = image.convert('RGBA')
-    if image.mode == 'CMYK':
-        image = image.convert('RGB')
-
-    # Remove alpha channel if present
-    if image.mode in ('RGBA', 'LA'):
-        background = Image.new('RGB', image.size, (255, 255, 255))
-        background.paste(image, mask=image.split()[3])  # 3 is the alpha channel
-        image = background
-
-    # Convert to the desired mode
-    return image.convert(mode)
-
-
-from transformers import (
-    CLIPSegForImageSegmentation,
-    CLIPSegProcessor
-)
-
-@torch.no_grad()
-@torch.cuda.amp.autocast()
-def clipseg_mask_generator(
-    images: List[Image.Image],
-    target_prompts: Union[List[str], str],
-    model_id: Literal[
-        "CIDAS/clipseg-rd64-refined", "CIDAS/clipseg-rd16"
-    ] = "CIDAS/clipseg-rd64-refined",
-    device=torch.device("cuda" if torch.cuda.is_available() else "cpu"),
-    bias: float = 0.0,
-    temp: float = 0.75,
-    cache_dir="./models",
-    **kwargs,
-) -> List[Image.Image]:
-    """
-    Returns a greyscale mask for each image based on the target_prompt.
-    """
-
-    if isinstance(target_prompts, str):
-        print(f'Using "{target_prompts}" as CLIP-segmentation prompt for all images.')
-        target_prompts = [target_prompts] * len(images)
-
-    model = None
-    if any(target_prompts):
-        processor = CLIPSegProcessor.from_pretrained(model_id, cache_dir=cache_dir)
-        model = CLIPSegForImageSegmentation.from_pretrained(model_id, cache_dir=cache_dir)
-        model = model.to(device)
-
-    masks = []
-
-    for image, prompt in tqdm(zip(images, target_prompts)):
-        original_size = image.size
-
-        if prompt != "":
-            inputs = processor(
-                text=[prompt, ""],
-                images=[image] * 2,
-                padding="max_length",
-                truncation=True,
-                return_tensors="pt",
-            ).to(device)
-
-            outputs = model(**inputs)
-
-            logits = outputs.logits
-            probs = torch.nn.functional.softmax(logits / temp, dim=0)[0]
-            probs = (probs + bias).clamp_(0, 1)
-            probs = 255 * probs / probs.max()
-
-            # make mask greyscale
-            mask = Image.fromarray(probs.cpu().numpy()).convert("L")
-            # resize mask to original size
-            mask = mask.resize(original_size)
-        else:
-            mask = Image.new("L", original_size, 255)
-
-        masks.append(mask)
-
-    # cleanup
-    del model
-    gc.collect()
-    torch.cuda.empty_cache()
-
-    return masks
-
-def clean_imgs_and_txt_files(source_data_directory, new_data_dir, error_dir, config):
+def clean_imgs_and_txt_files(source_data_directory, new_data_dir, error_dir, config, caption_mode):
     """
     Clean root dataset directory and ensure .txt files have matching images
     """
@@ -412,16 +158,21 @@ def clean_imgs_and_txt_files(source_data_directory, new_data_dir, error_dir, con
                 shutil.copy(file_path, os.path.join(error_dir, file))
 
     # Process .txt files after all images are handled
-    for base_name, txt_path in pending_txt_files.items():
-        if base_name in successful_images:
-            # Copy txt files that have matching successful images
-            shutil.copy(txt_path, os.path.join(new_data_dir, os.path.basename(txt_path)))
-        else:
-            # Move txt files without matching images to error directory
-            shutil.copy(txt_path, os.path.join(error_dir, os.path.basename(txt_path)))
+    total_txt_files_present = 0
+    if caption_mode:
+        for base_name, txt_path in pending_txt_files.items():
+            if base_name in successful_images:
+                # Copy txt files that have matching successful images
+                shutil.copy(txt_path, os.path.join(new_data_dir, os.path.basename(txt_path)))
+                total_txt_files_present += 1
+            else:
+                # Move txt files without matching images to error directory
+                shutil.copy(txt_path, os.path.join(error_dir, os.path.basename(txt_path)))
+    else:
+        print(f"Caption mode set to null, removing all .txt files!", flush=True)
 
     print(f"{total_imgs} imgs from {source_data_directory} converted to .jpg and saved to {new_data_dir}. "
-          f"Resized {resized} images.", flush=True)
+          f"Resized {resized} images. {total_txt_files_present} total .txt files present in data dir.", flush=True)
     config["dataset_path"] = new_data_dir
 
     return config
@@ -438,7 +189,9 @@ def remove_vowels(text):
     vowels = 'aeiouAEIOU'
     return ''.join(char for char in text if char not in vowels)
 
-def prep_dataset(config):
+from eden_utils import describe_image_concept, gpt4_v_caption_dataset, florence_caption_dataset, clipseg_mask_generator, load_image_with_orientation, auto_detect_training_mode
+
+def prep_dataset(config, verbose = True):
     new_data_root_dir = os.path.join(config["output_dir"], "dataset")
     new_data_dir = os.path.join(new_data_root_dir, "images")
     error_dir    = os.path.join(new_data_root_dir, "error_files")
@@ -447,33 +200,51 @@ def prep_dataset(config):
     os.makedirs(error_dir, exist_ok=True)
 
     # Cleanup and prep dataset:
-    config = clean_imgs_and_txt_files(config["dataset_path"], new_data_dir, error_dir, config)
+    config = clean_imgs_and_txt_files(config["dataset_path"], new_data_dir, error_dir, config, config.get("caption_mode"))
 
-    # Perform dataset captioning if enabled in the config
-    if config.get("caption_mode"):
-        if config.get("caption_mode") == "gpt":
-            gpt4_v_caption_dataset(config["dataset_path"], caption_mode=config["caption_mode"])
-        else:
-            florence_caption_dataset(config["dataset_path"], caption_mode=config["caption_mode"])
-    
+    # Use GPT4v to check if the dataset is a face or style
+    if not config.get("mode") or config.get("mode") == "auto":
+        config["mode"] = auto_detect_training_mode(config["dataset_path"])
+
+    # Generate GPT-4 V caption_prefix and masking_prompt if not provided in the config:
     if (not config.get("caption_prefix") or not config.get("masking_prompt")):
-        gpt_caption_prefix, gpt_masking_prompt = describe_image_concept(new_data_dir, config["caption_mode"])
+        gpt_description, gpt_masking_prompt = describe_image_concept(new_data_dir, config["caption_mode"])
         if not config.get("caption_prefix"):
-            config["caption_prefix"] = gpt_caption_prefix
+            config["caption_prefix"] = gpt_description
         if not config.get("masking_prompt"):
             config["masking_prompt"] = gpt_masking_prompt
 
     if config["mode"] == "face":  # set masking prompt to "face" for face mode
         config["masking_prompt"] = "face"
-    if config["mode"] == "style": # disable prefix and masking for style transfer
+    if config["mode"] == "style": # disable masking for style transfer
         config["masking_prompt"] = ""
-
-    # custom hack / trick: generate unique trigger text from the descriptions by just removing vowels:
-    config["caption_prefix"] = remove_vowels(config["caption_prefix"])
     
-    # Inject trigger text into each caption:
-    # cleanup_prompts_with_chatgpt(gpt_caption_prefix, config["dataset_path"], config["caption_mode"], config["seed"])
+    # custom hack / trick: generate unique trigger text from the descriptions by just removing vowels:
+    config["trigger_text"] = remove_vowels(config["caption_prefix"])
 
+    # Perform dataset captioning if enabled in the config:
+    trigger_token = "NO_TRIGGER_INJECTED"
+    if config.get("caption_mode"):
+        if "GPT" in config.get("caption_mode"):
+            trigger_token = gpt4_v_caption_dataset(
+                config["dataset_path"], 
+                caption_mode=config["caption_mode"], 
+                traininig_mode=config["mode"])
+        else:
+            florence_caption_dataset(config["dataset_path"], caption_mode=config["caption_mode"])
+
+    # Inject the final trigger text into the prompts:
+    if not config.get("caption_mode"):
+        config["caption_prefix"] = config["trigger_text"]
+    elif "GPT" in config.get("caption_mode"):
+        config["caption_prefix"] = ""
+        print("================================================")
+        print(f"=================== WARNING ===================")
+        print(f"Trigger text replacement not implemented yet!!!")
+        print("================================================")
+    else: # florence2:
+        config["caption_prefix"] = config["trigger_text"]
+    
     if config.get("masking_prompt"):
         # load all images from new_data_dir:
         img_filepaths = sorted([os.path.join(new_data_dir, f) for f in os.listdir(new_data_dir) if f.endswith('.jpg')])
@@ -491,8 +262,9 @@ def prep_dataset(config):
     else:
         config["alpha_mask"] = False
 
-    # finally:
+    # finally update the config:
     config = create_sample_prompts(config)
+
     # Convert all Path objects to strings before JSON serialization
     serializable_config = path_to_str(config)
     config = construct_toml(config)
@@ -500,9 +272,25 @@ def prep_dataset(config):
     with open(Path(config["output_dir"]) / "config.json", 'w') as f:
         json.dump(serializable_config, f, indent=4)
 
-    return config
 
-if __name__ == "__main__":
-    folder_path = "test_imgs"
-    caption_mode = "<CAPTION>"
-    florence_caption_dataset(folder_path, batch_size=2, caption_mode = caption_mode)
+    if verbose:
+        print("==========================================")
+        print("==========================================")
+        print(" ========== Final Train Settings: ========")
+        print(f"Caption Prefix: {config['caption_prefix']}")
+        print(f"Masking Prompt: {config['masking_prompt']}")
+        print(f"Training Mode: {config['mode']}")
+        print(f"Alpha Mask: {config['alpha_mask']}")
+        print(f"Dataset TOML: {config['dataset_config']}")
+        print(" ========== Final Train Captions: ========")
+        for subdir, _, files in os.walk(new_data_dir):
+            for file in files:
+                if file.endswith('.txt'):
+                    with open(os.path.join(subdir, file), 'r') as f:
+                        print(f"{file}: {f.readline().strip()}")
+        print(" ========== Final Train Config: ==========")
+        print(config)
+        print("==========================================")
+        print("==========================================")
+
+    return config

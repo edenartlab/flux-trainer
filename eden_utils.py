@@ -15,9 +15,11 @@ from typing import Iterator
 from PIL import Image
 from pymongo import MongoClient
 from dotenv import load_dotenv
-
+import gc
 from pathlib import Path
-from typing import Optional, List, Tuple
+
+from tqdm import tqdm
+from typing import Optional, List, Tuple, Union, Literal, Dict
 import logging
 
 load_dotenv()
@@ -204,6 +206,7 @@ def upload_buffer(buffer, name=None, file_type=None, env="STAGE"):
 
     return file_url, name
 
+import torch
 def create_thumbnail(
     config: dict,
     width: int = 1024,
@@ -230,6 +233,14 @@ def create_thumbnail(
         ValueError: If n_imgs is not a perfect square or if config is invalid
         FileNotFoundError: If required files or directories are missing
     """
+
+    # Print free/used gpu memory using torch cuda:
+    print("-----------------------------------------------------")
+    print("PRE-thumbnail creation:")
+    print(f"GPU Memory Allocated: {torch.cuda.memory_allocated() / 1024**3:.2f} GB")
+    print(f"GPU Memory reserved: {torch.cuda.memory_reserved() / 1024**3:.2f} GB")
+    print(f"GPU Memory Free: {torch.cuda.memory_reserved() / 1024**3:.2f} GB")
+
     try:
         # Validate inputs
         grid_size = int(n_imgs ** 0.5)
@@ -327,26 +338,85 @@ def create_thumbnail(
             except OSError:
                 pass
 
+import textwrap
+import concurrent.futures
 
 def gpt4_v_caption_dataset(
-    images, 
-    captions, 
+    dataset_dir,               
+    caption_mode="<GPT_CAPTION>",  
+    traininig_mode="style",
+    keep_existing_captions=True,  
     batch_size=4
 ):
     """
     Generate captions for a dataset of images using GPT-4 Vision.
     
     Args:
-        images: List of image paths or PIL Images
-        captions: List of existing captions (None for images that need captions)
-        batch_size: Number of concurrent API requests
-        prompt: Custom prompt for the captioning task
+        dataset_dir (str): Directory containing images to caption
+        caption_mode (str): Caption generation mode (maintains API consistency with Florence)
+        keep_existing_captions (bool): If True, skip images that already have captions
+        batch_size (int): Number of concurrent API requests
         
     Returns:
-        List of captions
+        None
     """
+    # NEW: Get image paths based on keep_existing_captions flag
+    if keep_existing_captions:
+        image_paths, caption_paths = get_image_paths(dataset_dir, skip_captioned=True)
+        print(f"Found {len(image_paths)} images without captions")
+        print(f"Found {len(caption_paths)} existing captions to preserve")
+    else:
+        image_paths = get_image_paths(dataset_dir, skip_captioned=False)
+        print(f"Processing all {len(image_paths)} images")
 
-    prompt="""Concisely describe this image without assumptions with at most 20 words. Don't start with statements like 'The image features...', just describe what you see. The description is a dataset caption that will be used for training a generative model (FLUX)."""
+    if not image_paths:
+        print("No images to caption.")
+        return
+
+    # Load all images and prepare captions list
+    images = []
+    captions = []
+    for path in image_paths:
+        images.append(Image.open(path).convert("RGB"))
+        caption_path = f"{os.path.splitext(path)[0]}.txt"
+        if os.path.exists(caption_path) and keep_existing_captions:
+            with open(caption_path, 'r') as f:
+                captions.append(f.read().strip())
+        else:
+            captions.append(None)
+
+    if caption_mode == "<GPT_CAPTION>":
+        n_words = 15
+    elif caption_mode == "<GPT_DETAILED_CAPTION>":
+        n_words = 25
+    elif caption_mode == "<GPT_MORE_DETAILED_CAPTION>":
+        n_words = 35
+
+    generic_prompt = textwrap.dedent(f"""Concisely describe the content of this image without any assumptions with at most {n_words} words. 
+        Don't start with statements like 'The image features...', just describe what you see. 
+        The description is a dataset caption that will be used for training a generative AI model (FLUX).""")
+
+    # Adjust prompt based on caption_mode
+    if traininig_mode == "style":
+        trigger_token = "REF_STYLE"
+        base_prompt = textwrap.dedent(f"""
+            Ignore the aesthetic and specific style of the image, just focus on the content.
+            The style is simply referred to as 'REF_STYLE' and the description should always contain the text '{trigger_token}'.
+            """)
+    elif traininig_mode == "object":
+        trigger_token = "REF_CONCEPT"
+        base_prompt = textwrap.dedent(f"""
+            Always refer to the main object/concept as 'REF_CONCEPT'. As such the prompt should always contain the trigger token '{trigger_token}'.
+            """)
+    elif traininig_mode == "face":
+        trigger_token = "REF_CHARACTER"
+        base_prompt = textwrap.dedent(f"""
+            Always refer to the main subject as 'REF_CHARACTER'. As such the prompt should always contain the trigger token '{trigger_token}'.
+            """)
+
+    base_prompt = generic_prompt + "\n" + base_prompt + "\nReply with just the image description, nothing else!"
+    print(f"----- Full chatgpt prompt: -----")
+    print(base_prompt)
 
     client = OpenAI()
 
@@ -357,17 +427,19 @@ def gpt4_v_caption_dataset(
     def process_single_image(index, image):
         """Process a single image and return its caption."""
         try:
-            # Convert image to base64
             base64_image = prep_img_for_gpt_api(image)
             
-            # Prepare the API request
-            response = client.chat.completions.create(
+            response = client.beta.chat.completions.parse(
                 model="gpt-4o",
                 messages=[
                     {
+                        "role": "system",
+                        "content": "You are an experienced image captioner that generates concise, descriptive captions for images."
+                    },
+                    {
                         "role": "user",
                         "content": [
-                            {"type": "text", "text": prompt},
+                            {"type": "text", "text": base_prompt},
                             {
                                 "type": "image_url",
                                 "image_url": {
@@ -379,12 +451,16 @@ def gpt4_v_caption_dataset(
                     }
                 ],
                 max_tokens=100,
-                response_format={ "type": "json_object" }
+                response_format=ImageCaption,
             )
             
-            # Parse the response
             result = ImageCaption.parse_raw(response.choices[0].message.content)
             caption = result.caption.strip().rstrip('.').rstrip(',')
+            
+            # Save caption immediately after generation
+            caption_path = f"{os.path.splitext(image_paths[index])[0]}.txt"
+            with open(caption_path, "w") as f:
+                f.write(caption)
             
             return index, caption
             
@@ -394,14 +470,12 @@ def gpt4_v_caption_dataset(
     
     # Process images in parallel
     with concurrent.futures.ThreadPoolExecutor(max_workers=batch_size) as executor:
-        # Only process images that don't have captions
         future_to_index = {
             executor.submit(process_single_image, i, img): i 
             for i, img in enumerate(images) 
             if captions[i] is None
         }
         
-        # Collect results as they complete
         for future in concurrent.futures.as_completed(future_to_index):
             index = future_to_index[future]
             try:
@@ -411,9 +485,14 @@ def gpt4_v_caption_dataset(
             except Exception as exc:
                 print(f"Caption generation for image {index + 1} failed with exception: {exc}")
     
-    return captions
+    # Cleanup
+    del client
+    gc.collect()
+    
+    return trigger_token
 
-def describe_image_concept(images_dir, mode):
+
+def describe_image_concept(images_dir, mode, n=6):
     """Gets both a detailed and concise description of the main visual concept in a set of images."""    
     client = OpenAI()
     
@@ -422,7 +501,7 @@ def describe_image_concept(images_dir, mode):
     image_files = [os.path.join(images_dir, f) for f in image_files 
                   if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tiff'))]
     
-    n = min(6, len(image_files))
+    n = min(n, len(image_files))
     selected_images = random.sample(image_files, n)
 
     class ImageDescriptions(BaseModel):
@@ -443,15 +522,11 @@ def describe_image_concept(images_dir, mode):
 
     if mode == "style":
         gpt_task_description = """Provide two descriptions of the shared concept in these images:
-
-1. A detailed visual description of the shared style/aesthetic in these images of maximum 10 words. Always start with the main category of the images (cartoon, lineart sketch, painting, photograph, ...) followed by the key visual features (like colors, shapes, stylistic hints, ...) of the shared visual aesthetic, avoiding abstract words or interpretations. Your description should help someone generate a specific, representative example of the style.
-
+1. A detailed visual description of the shared style/aesthetic in these images of maximum 10 words. Always start with the main category of the images (cartoon, lineart sketch, painting, photograph, ...) followed by the key visual features (like stylistic hints, colors, shapes, ...) of the shared visual aesthetic, avoiding abstract words or interpretations. Your description should help someone generate a specific, representative example of the style.
 2. A more concise description (max 5 words) that captures just the essentials of the visual style."""
     else:
         gpt_task_description = """Provide two descriptions of the shared concept in these images:
-
 1. A detailed visual description of the shared concept (object / character / person / ...) in these images of maximum 10 words. Always start with the main category of the thing (man, character, car, ...) followed by the key visual features (like colors, shapes, accessories, expressions, style, ...) of the central subject, avoiding abstract words or interpretations. Your description should help someone generate a specific, representative example of the concept. Use precise, observable terms - for example, describe 'red' instead of 'colorful', 'standing upright' instead of 'positioned', 'wearing a blue hat' instead of 'accessorized'. Avoid describing actions, emotions or contexts. Ignore any aspect of the main concept that varies across examples (therefore never use words like 'or' or 'various' in the description), the goal is to create a clear mental picture of the archetypal instance of what's shown through a single description that captures the visual, common essence of the shared concept in the images.
-
 2. A concise description (max 5 words) that captures just the essential visual concept and will be used to generate masks through CLIPSegmentation."""
 
     response = client.beta.chat.completions.parse(
@@ -487,6 +562,8 @@ def describe_image_concept(images_dir, mode):
     
     return detailed, short
 
+from pydantic import BaseModel, field_validator
+
 def auto_detect_training_mode(images_dir, n_img_samples = 6):
     """
     Analyzes sample images to determine the appropriate LoRA training mode.
@@ -512,7 +589,7 @@ def auto_detect_training_mode(images_dir, n_img_samples = 6):
         @field_validator('mode')
         def validate_mode(cls, v):
             if v not in ['face', 'object', 'style']:
-                raise ValueError('mode must be one of: face, object, style')
+                raise ValueError(f'mode must be one of: face, object, style but was {v}')
             return v
 
     image_attachments = [
@@ -551,6 +628,259 @@ def auto_detect_training_mode(images_dir, n_img_samples = 6):
     )
 
     mode = response.choices[0].message.parsed.mode
-    print(f"--- Detected training mode: {mode}")
+    print(f"----> Auto detected training mode: {mode}")
     
     return mode
+
+
+
+#workaround for unnecessary flash_attn requirement
+from unittest.mock import patch
+from transformers.dynamic_module_utils import get_imports
+from transformers import AutoProcessor, AutoModelForCausalLM 
+
+def fixed_get_imports(filename: str | os.PathLike) -> list[str]:
+    if not str(filename).endswith("modeling_florence2.py"):
+        return get_imports(filename)
+    imports = get_imports(filename)
+    try:
+        imports.remove("flash_attn")
+    except:
+        pass
+    return imports
+
+def get_image_paths(dataset_dir, skip_captioned=True):
+    """
+    Get paths to images in dataset_dir. Optionally skip images that already have captions.
+    
+    Args:
+        dataset_dir (str): Directory containing images and captions
+        skip_captioned (bool): If True, skip images that already have matching .txt files
+        
+    Returns:
+        tuple: (image_paths, caption_paths) if skip_captioned=True, else just image_paths
+    """
+    image_paths = []
+    caption_paths = []
+    existing_captions = set()
+
+    # First collect all caption files if we need to skip them
+    if skip_captioned:
+        for root, _, files in os.walk(dataset_dir):
+            for file in sorted(files):
+                if file.lower().endswith('.txt'):
+                    caption_paths.append(os.path.join(root, file))
+                    existing_captions.add(os.path.splitext(file)[0])
+
+    # Then collect image files
+    for root, _, files in os.walk(dataset_dir):
+        for file in sorted(files):
+            if file.lower().endswith(('.jpg', '.jpeg', '.png')):
+                basename = os.path.splitext(file)[0]
+                if not skip_captioned or basename not in existing_captions:
+                    image_paths.append(os.path.join(root, file))
+    
+    return (image_paths, caption_paths) if skip_captioned else image_paths
+
+device = "cuda:0" if torch.cuda.is_available() else "cpu"
+torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
+
+@torch.no_grad()
+def florence_caption_dataset(dataset_dir, 
+        caption_mode="<CAPTION>",
+        keep_existing_captions=True,
+        florence_model_path="./models",
+        batch_size=1):
+    """
+    Generate captions for images using Florence-2 model.
+    
+    Args:
+        dataset_dir (str): Directory containing images to caption
+        caption_mode (str): Caption generation mode for Florence model: <CAPTION> / <DETAILED_CAPTION> / <MORE_DETAILED_CAPTION>
+        keep_existing_captions (bool): If True, skip images that already have captions
+        florence_model_path (str): Path to store/load Florence model
+        batch_size (int): Batch size for processing images
+    """
+    # Get paths to process
+    if keep_existing_captions:
+        image_paths, caption_paths = get_image_paths(dataset_dir, skip_captioned=True)
+        print(f"Found {len(image_paths)} images without captions")
+        print(f"Found {len(caption_paths)} existing captions to preserve")
+    else:
+        image_paths = get_image_paths(dataset_dir, skip_captioned=False)
+        print(f"Processing all {len(image_paths)} images")
+
+    if not image_paths:
+        print("No images to caption.")
+        return
+
+    # Load model and processor
+    os.makedirs(florence_model_path, exist_ok=True)
+    with patch("transformers.dynamic_module_utils.get_imports", fixed_get_imports):
+        model = AutoModelForCausalLM.from_pretrained(
+            "microsoft/Florence-2-large",
+            attn_implementation="sdpa",
+            device_map=device,
+            torch_dtype=torch_dtype,
+            trust_remote_code=True,
+            cache_dir=florence_model_path
+        )
+    processor = AutoProcessor.from_pretrained(
+        "microsoft/Florence-2-large",
+        trust_remote_code=True,
+        cache_dir=florence_model_path
+    )
+
+    # Process images in batches
+    for i in tqdm(range(0, len(image_paths), batch_size)):
+        batch_paths = image_paths[i:i+batch_size]
+        batch_images = [Image.open(path).convert("RGB") for path in batch_paths]
+        
+        # Generate captions
+        inputs = processor(
+            text=[caption_mode] * len(batch_images),
+            images=batch_images,
+            return_tensors="pt",
+            padding=True
+        ).to(device, torch_dtype)
+        
+        generated_ids = model.generate(
+            input_ids=inputs["input_ids"],
+            pixel_values=inputs["pixel_values"],
+            max_new_tokens=1024,
+            num_beams=4
+        )
+
+        # Process and save captions
+        generated_texts = processor.batch_decode(generated_ids, skip_special_tokens=False)
+        parsed_answers = [
+            processor.post_process_generation(text, task=caption_mode, image_size=(img.width, img.height))
+            for text, img in zip(generated_texts, batch_images)
+        ]
+        
+        for path, parsed_answer in zip(batch_paths, parsed_answers):
+            caption = parsed_answer[caption_mode].replace("<pad>", "").replace("The image shows a ", "A ")
+            caption_path = f"{os.path.splitext(path)[0]}.txt"
+            with open(caption_path, "w") as f:
+                f.write(caption)
+
+    # Cleanup
+    model.to('cpu')
+    del model, processor
+    gc.collect()
+    torch.cuda.empty_cache()
+
+    return
+
+
+def load_image_with_orientation(path, mode="RGB"):
+    image = Image.open(path)
+
+    # Try to get the Exif orientation tag (0x0112), if it exists
+    try:
+        exif_data = image._getexif()
+        orientation = exif_data.get(0x0112)
+    except (AttributeError, KeyError, IndexError):
+        orientation = None
+
+    # Apply the orientation, if it's present
+    if orientation:
+        if orientation == 2:
+            image = image.transpose(Image.FLIP_LEFT_RIGHT)
+        elif orientation == 3:
+            image = image.rotate(180, expand=True)
+        elif orientation == 4:
+            image = image.transpose(Image.FLIP_TOP_BOTTOM)
+        elif orientation == 5:
+            image = image.rotate(-90, expand=True).transpose(Image.FLIP_LEFT_RIGHT)
+        elif orientation == 6:
+            image = image.rotate(-90, expand=True)
+        elif orientation == 7:
+            image = image.rotate(90, expand=True).transpose(Image.FLIP_LEFT_RIGHT)
+        elif orientation == 8:
+            image = image.rotate(90, expand=True)
+
+    if image.mode == 'P':
+        image = image.convert('RGBA')
+    if image.mode == 'CMYK':
+        image = image.convert('RGB')
+
+    # Remove alpha channel if present
+    if image.mode in ('RGBA', 'LA'):
+        background = Image.new('RGB', image.size, (255, 255, 255))
+        background.paste(image, mask=image.split()[3])  # 3 is the alpha channel
+        image = background
+
+    # Convert to the desired mode
+    return image.convert(mode)
+
+
+from transformers import (
+    CLIPSegForImageSegmentation,
+    CLIPSegProcessor
+)
+
+@torch.no_grad()
+@torch.cuda.amp.autocast()
+def clipseg_mask_generator(
+    images: List[Image.Image],
+    target_prompts: Union[List[str], str],
+    model_id: Literal[
+        "CIDAS/clipseg-rd64-refined", "CIDAS/clipseg-rd16"
+    ] = "CIDAS/clipseg-rd64-refined",
+    device=torch.device("cuda" if torch.cuda.is_available() else "cpu"),
+    bias: float = 0.0,
+    temp: float = 0.75,
+    cache_dir="./models",
+    **kwargs,
+) -> List[Image.Image]:
+    """
+    Returns a greyscale mask for each image based on the target_prompt.
+    """
+
+    if isinstance(target_prompts, str):
+        print(f'Using "{target_prompts}" as CLIP-segmentation prompt for all images.')
+        target_prompts = [target_prompts] * len(images)
+
+    model = None
+    if any(target_prompts):
+        processor = CLIPSegProcessor.from_pretrained(model_id, cache_dir=cache_dir)
+        model = CLIPSegForImageSegmentation.from_pretrained(model_id, cache_dir=cache_dir)
+        model = model.to(device)
+
+    masks = []
+
+    for image, prompt in tqdm(zip(images, target_prompts)):
+        original_size = image.size
+
+        if prompt != "":
+            inputs = processor(
+                text=[prompt, ""],
+                images=[image] * 2,
+                padding="max_length",
+                truncation=True,
+                return_tensors="pt",
+            ).to(device)
+
+            outputs = model(**inputs)
+
+            logits = outputs.logits
+            probs = torch.nn.functional.softmax(logits / temp, dim=0)[0]
+            probs = (probs + bias).clamp_(0, 1)
+            probs = 255 * probs / probs.max()
+
+            # make mask greyscale
+            mask = Image.fromarray(probs.cpu().numpy()).convert("L")
+            # resize mask to original size
+            mask = mask.resize(original_size)
+        else:
+            mask = Image.new("L", original_size, 255)
+
+        masks.append(mask)
+
+    # cleanup
+    del model
+    gc.collect()
+    torch.cuda.empty_cache()
+
+    return masks

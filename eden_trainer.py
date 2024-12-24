@@ -10,7 +10,6 @@ from main import *
 from bson import ObjectId
 from eden_utils import tasks_collection
 
-
 logging.basicConfig(
     level=logging.INFO, 
     format='%(asctime)s - %(levelname)s - %(message)s', 
@@ -93,10 +92,6 @@ def main():
 
         # Download the dataset from the URL provided
         download_dataset(config["dataset_path"], task_args["lora_training_urls"])
-        
-        # Use GPT4v to check if the dataset is a face or style
-        if not config.get("mode") or config.get("mode") == "auto":
-            config["mode"] = eden_utils.auto_detect_training_mode(config["dataset_path"])
 
         # Preprocess the dataset:
         config = prep_dataset(config)
@@ -108,6 +103,9 @@ def main():
         # make thumbnail: 
         thumbnail_url = eden_utils.create_thumbnail(config, env=args.env)
         print(f"Thumbnail URL: {thumbnail_url}")
+
+        if not thumbnail_url:
+            raise ValueError("Failed to create thumbnail")
 
         # upload to eden
         file_url, _ = eden_utils.upload_file(

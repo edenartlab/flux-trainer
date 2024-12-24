@@ -1,8 +1,10 @@
 import logging
 import sys
 import argparse
+from pathlib import Path
 
-from utils import *
+from utils import construct_config, prep_dataset, run_job
+from typing import Optional, List, Tuple, Union, Literal, Dict, Any
 from download_dataset import *
 
 logging.basicConfig(
@@ -154,6 +156,13 @@ urgent:
 Done but to be tested:
 - run inference sample imgs at the end (vincent prompts)
 - add trigger word to output args
+
+
+
+OPTIONAL ARGS:
+"mode"
+"masking_prompt"
+"caption_prefix"
 
 
 
