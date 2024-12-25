@@ -245,11 +245,9 @@ def prep_dataset(config, verbose = True):
     else: # florence2:
         config["caption_prefix"] = config["lora_trigger_text"]
     
-    if config.get("masking_prompt"):
-        # load all images from new_data_dir:
+    if config.get("masking_prompt"): # generate masks:
         img_filepaths = sorted([os.path.join(new_data_dir, f) for f in os.listdir(new_data_dir) if f.endswith('.jpg')])
         images = [Image.open(f) for f in img_filepaths]
-        print(f"Generating CLIPSeg masks for {len(images)} images...", flush=True)
         masks = clipseg_mask_generator(images, config["masking_prompt"])
 
         # Now, iterate over the images, add the corresponding mask as alpha channel and save the resulting image as png (overwriting the jpg):

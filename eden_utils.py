@@ -328,14 +328,14 @@ def create_thumbnail(
 
                 import subprocess
 
-                env = os.environ.copy()
-                env['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
+                process_env = os.environ.copy()
+                process_env['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
                 result = subprocess.run(
                     cmd, 
                     check=True, 
                     capture_output=True, 
                     text=True,
-                    env=env  # Pass the modified environment
+                    env=process_env  # Pass the modified environment
                 )
                 logging.info(f"Generation command output: {result.stdout}")
             except subprocess.CalledProcessError as e:
@@ -881,17 +881,22 @@ def clipseg_mask_generator(
     Returns a greyscale mask for each image based on the target_prompt.
     """
 
+    print(f"Generating CLIPSeg masks for {len(images)} images...", flush=True)
+
     if isinstance(target_prompts, str):
         print(f'Using "{target_prompts}" as CLIP-segmentation prompt for all images.')
         target_prompts = [target_prompts] * len(images)
 
     model = None
+    masks = []
+
     if any(target_prompts):
         processor = CLIPSegProcessor.from_pretrained(model_id, cache_dir=cache_dir)
         model = CLIPSegForImageSegmentation.from_pretrained(model_id, cache_dir=cache_dir)
         model = model.to(device)
-
-    masks = []
+    else:
+        print("No masking prompts provided, returning blank masks.")
+        return [Image.new("L", img.size, 255) for img in images]
 
     for image, prompt in tqdm(zip(images, target_prompts)):
         original_size = image.size

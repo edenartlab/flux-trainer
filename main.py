@@ -142,20 +142,10 @@ TODO:
 
 
 later:
-- test out better segmentation models for masking: https://github.com/microsoft/X-Decoder or https://github.com/IDEA-Research/OpenSeeD 
-
-
-- caption with gpt4v
 - add automatic dataset augmentation on start
-
-urgent:
-- modify to have automatic style description tag
+- test out better segmentation models for masking: https://github.com/microsoft/X-Decoder or https://github.com/IDEA-Research/OpenSeeD 
+- caption with  and re-inject trigger token
 - style token trigger: "in the style of TOK" / "TOK"
-
-
-Done but to be tested:
-- run inference sample imgs at the end (vincent prompts)
-- add trigger word to output args
 
 
 
@@ -163,8 +153,6 @@ OPTIONAL ARGS:
 "mode"
 "masking_prompt"
 "caption_prefix"
-
-
 
 
 

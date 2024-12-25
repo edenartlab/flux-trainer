@@ -46,13 +46,13 @@ def main():
             }}
         )
 
-        # Get task args
-        task_args = task["args"]
-        print("task_args", task_args)
-
-        # Override args
+        # Get default base args:
         with open(args.config, 'r') as f:
             config_json = json.load(f)
+
+        # Get task args
+        task_args = task["args"]
+        print("task_args: ", task_args)
 
         # Update config_json with all values from task_args
         for key, value in task_args.items():
@@ -62,6 +62,7 @@ def main():
             else:
                 config_json[key] = str(value)
 
+        #####################################################
         overwrite_dict = {
             "caption_prefix": "",
             "dataset_toml": "template/dataset_template_512_bs2.toml",
@@ -83,6 +84,7 @@ def main():
         # Update config_json with overwrite_dict values
         for key, value in overwrite_dict.items():
             config_json[key] = value
+        #####################################################
 
         print(f"Final training arguments for job:")
         print(config_json)
