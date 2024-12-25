@@ -1,6 +1,7 @@
 {
     "dataset_path": "dataset_path",
     "caption_mode": null,
+    "guidance_scale": "4.0",
     "mode": "auto",
     "caption_prefix": "",
     "dataset_toml": "template/dataset_template_512_bs4.toml",

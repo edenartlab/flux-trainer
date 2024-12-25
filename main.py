@@ -130,10 +130,8 @@ def construct_train_command(config: Dict[str, Any]) -> List[str]:
             "--timestep_sampling", "shift",
             "--discrete_flow_shift", "3.1582",
             "--model_prediction_type", "raw",
-            "--guidance_scale", "1.0"
+            "--guidance_scale", config["guidance_scale"]
         ]
-
-    # train on 1024
 
     return cmd
 
@@ -145,10 +143,11 @@ TODO:
 later:
 - add automatic dataset augmentation on start
 - test out better segmentation models for masking: https://github.com/microsoft/X-Decoder or https://github.com/IDEA-Research/OpenSeeD 
-- caption with  and re-inject trigger token
+- caption with GPT4V and re-inject trigger token
 - style token trigger: "in the style of TOK" / "TOK"
 - https://github.com/kohya-ss/sd-scripts/issues/1702#issuecomment-2556661896
 - test guidance_scale > 1.0 with captions!!
+- sweep --min_snr_gamma values
 
 
 OPTIONAL ARGS:
@@ -156,15 +155,14 @@ OPTIONAL ARGS:
 "masking_prompt"
 "caption_prefix"
 
-
-
 args to test out from sd-scripts/library/train_util.py:
-
 
 --min_snr_gamma 5
 loss_type
 gradient_accumulation_steps
-color_aug
+color_aug                                                                                               
+face_crop_aug_range: None                                                                                                    
+random_crop: False   
 face_crop_aug_range
 zero_terminal_snr
 adaptive_noise_scale

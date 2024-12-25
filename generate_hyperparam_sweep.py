@@ -10,7 +10,7 @@ from datetime import datetime
 # Setup the base experiment config
 exp_name = "banny_final_sweep"
 n_exp = 100  # how many random experiment settings to generate
-min_hamming_distance = 1  # min params that have to be different from previous experiments
+min_hamming_distance = 2  # min params that have to be different from previous experiments
 nohup = True
 
 # Define training hyperparameters and their possible values
@@ -18,20 +18,21 @@ hyperparameters = {
     "dataset_path": [
         "/data/xander/Projects/cog/GitHub_repos/flux-trainer/datasets/banny_best"
     ],
-    "caption_mode": [None],
+    "caption_mode": ["<GPT_DETAILED_CAPTION>"],
     "mode": ["object"],
     "caption_prefix": ["a yellow cartoon banana with a collar"],
     "masking_prompt": ["yellow banana character"],
 
     "lora_rank": ["2", "4", "8"],
     "network_alpha": ["8", "16", "32"],
-    "learning_rate": ["0.25e-4", "1.0e-4"],
+    "learning_rate": ["0.5e-4", "1.0e-4", "2.5e-4"],
     "ip_noise_gamma": ["0.1"],
     "noise_offset": ["0.1"],
+    "guidance_scale": ["1.0", "4.0"],
 
-    "max_train_steps": ["2000"],
-    "save_every_n_steps": ["1000"],
-    "sample_every_n_steps": ["2000"],
+    "max_train_steps": ["1500"],
+    "save_every_n_steps": ["750"],
+    "sample_every_n_steps": ["1500"],
 
     "dataset_toml": [
         #"template/dataset_template_512_bs1.toml",

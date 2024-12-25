@@ -211,6 +211,10 @@ def prep_dataset(config, verbose = True):
     if not config.get("mode") or config.get("mode") == "auto":
         config["mode"] = auto_detect_training_mode(config["dataset_path"])
 
+
+    ######################################################################################
+    ######################################################################################
+
     # Generate GPT-4 V caption_prefix and masking_prompt if not provided in the config:
     if (not config.get("caption_prefix") or not config.get("masking_prompt")):
         gpt_description, gpt_masking_prompt = describe_image_concept(new_data_dir, config["caption_mode"])
@@ -218,23 +222,21 @@ def prep_dataset(config, verbose = True):
             config["caption_prefix"] = gpt_description
         if not config.get("masking_prompt"):
             config["masking_prompt"] = gpt_masking_prompt
-
-    if config["mode"] == "face":  # set masking prompt to "face" for face mode
-        config["masking_prompt"] = "face"
-    if config["mode"] == "style": # disable masking for style transfer
-        config["masking_prompt"] = ""
     
     # custom hack / trick: generate unique trigger text from the descriptions by just removing vowels:
-    config["lora_trigger_text"] = remove_vowels(config["caption_prefix"])
+    #config["lora_trigger_text"] = remove_vowels(config["caption_prefix"])
+    descriptor = config["masking_prompt"]
+    config["lora_trigger_text"] = f"Pat Spencer ({descriptor})"
 
     # Perform dataset captioning if enabled in the config:
-    trigger_token = "NO_TRIGGER_INJECTED"
     if config.get("caption_mode"):
+        print("WARNING: CAPTIONED training is not yet fully implemented!!! Ask Xander!!!")
         if "GPT" in config.get("caption_mode"):
             trigger_token = gpt4_v_caption_dataset(
                 config["dataset_path"], 
                 caption_mode=config["caption_mode"], 
-                traininig_mode=config["mode"])
+                traininig_mode=config["mode"],
+                lora_trigger_text=config['lora_trigger_text'])
         else:
             florence_caption_dataset(config["dataset_path"], caption_mode=config["caption_mode"])
 
@@ -243,13 +245,25 @@ def prep_dataset(config, verbose = True):
         config["caption_prefix"] = config["lora_trigger_text"]
     elif "GPT" in config.get("caption_mode"):
         config["caption_prefix"] = ""
-        print("================================================")
-        print(f"=================== WARNING ===================")
-        print(f"Trigger text replacement not implemented yet!!!")
-        print("================================================")
+
+
+
+
     else: # florence2:
         config["caption_prefix"] = config["lora_trigger_text"]
-    
+
+    # REMOVE THIS!!!
+    #config["caption_prefix"] = ""
+    #config["lora_trigger_text"] = "a man named Xander Steenbrugge"
+
+    ######################################################################################
+    ######################################################################################
+
+    if config["mode"] == "face":  # set masking prompt to "face" for face mode
+        config["masking_prompt"] = "face"
+    if config["mode"] == "style": # disable masking for style transfer
+        config["masking_prompt"] = ""
+
     if config.get("masking_prompt"): # generate masks:
         img_filepaths = sorted([os.path.join(new_data_dir, f) for f in os.listdir(new_data_dir) if f.endswith('.jpg')])
         images = [Image.open(f) for f in img_filepaths]
@@ -280,6 +294,7 @@ def prep_dataset(config, verbose = True):
         print("==========================================")
         print("==========================================")
         print(" ========== Final Train Settings: ========")
+        print(f"Lora Trigger Text: {config['lora_trigger_text']}")
         print(f"Caption Prefix: {config['caption_prefix']}")
         print(f"Masking Prompt: {config['masking_prompt']}")
         print(f"Training Mode: {config['mode']}")

@@ -388,6 +388,7 @@ def gpt4_v_caption_dataset(
     dataset_dir,               
     caption_mode="<GPT_CAPTION>",  
     traininig_mode="style",
+    lora_trigger_text=None,
     keep_existing_captions=True,  
     batch_size=4
 ):
@@ -443,18 +444,18 @@ def gpt4_v_caption_dataset(
     if traininig_mode == "style":
         trigger_token = "REF_STYLE"
         base_prompt = textwrap.dedent(f"""
-            Ignore the aesthetic and specific style of the image, just focus on the content.
-            The style is simply referred to as 'REF_STYLE' and the description should always contain the text '{trigger_token}'.
+            Ignore the aesthetic and specific style of the image, just focus on the content (objects, characters, composition, actions, ...).
+            The style is simply referred to as 'REF_STYLE' and the description should always contain the text '{trigger_token}' as a stylistic hint / modifier.
             """)
     elif traininig_mode == "object":
         trigger_token = "REF_CONCEPT"
         base_prompt = textwrap.dedent(f"""
-            Always refer to the main object/concept as 'REF_CONCEPT'. As such the prompt should always contain the trigger token '{trigger_token}'.
+            Always refer to the main object/concept as 'REF_CONCEPT'. As such the prompt should always contain the trigger token '{trigger_token}' and mainly focus on the style, context and composition instead of on the visual elements that constitute {trigger_token}.
             """)
     elif traininig_mode == "face":
         trigger_token = "REF_CHARACTER"
         base_prompt = textwrap.dedent(f"""
-            Always refer to the main subject as 'REF_CHARACTER'. As such the prompt should always contain the trigger token '{trigger_token}'.
+            Always refer to the main subject as 'REF_CHARACTER'. As such the prompt should always contain the trigger token '{trigger_token}' and mainly focus on the style, context and composition instead of on the visual elements that constitute {trigger_token}.
             """)
 
     base_prompt = generic_prompt + "\n" + base_prompt + "\nReply with just the image description, nothing else!"
@@ -499,6 +500,11 @@ def gpt4_v_caption_dataset(
             
             result = ImageCaption.parse_raw(response.choices[0].message.content)
             caption = result.caption.strip().rstrip('.').rstrip(',')
+
+            if lora_trigger_text:
+                caption = caption.replace(trigger_token, lora_trigger_text)
+            
+            caption = caption.strip().rstrip('.').rstrip(',')
             
             # Save caption immediately after generation
             caption_path = f"{os.path.splitext(image_paths[index])[0]}.txt"
@@ -566,11 +572,11 @@ def describe_image_concept(images_dir, mode, n=6):
     if mode == "style":
         gpt_task_description = """Provide two descriptions of the shared concept in these images:
 1. A detailed visual description of the shared style/aesthetic in these images of maximum 10 words. Always start with the main category of the images (cartoon, lineart sketch, painting, photograph, ...) followed by the key visual features (like stylistic hints, colors, shapes, ...) of the shared visual aesthetic, avoiding abstract words or interpretations. Your description should help someone generate a specific, representative example of the style.
-2. A more concise description (max 5 words) that captures just the essentials of the visual style."""
+2. A more concise description (max 4 words) that captures just the essentials of the visual style."""
     else:
         gpt_task_description = """Provide two descriptions of the shared concept in these images:
 1. A detailed visual description of the shared concept (object / character / person / ...) in these images of maximum 10 words. Always start with the main category of the thing (man, character, car, ...) followed by the key visual features (like colors, shapes, accessories, expressions, style, ...) of the central subject, avoiding abstract words or interpretations. Your description should help someone generate a specific, representative example of the concept. Use precise, observable terms - for example, describe 'red' instead of 'colorful', 'standing upright' instead of 'positioned', 'wearing a blue hat' instead of 'accessorized'. Avoid describing actions, emotions or contexts. Ignore any aspect of the main concept that varies across examples (therefore never use words like 'or' or 'various' in the description), the goal is to create a clear mental picture of the archetypal instance of what's shown through a single description that captures the visual, common essence of the shared concept in the images.
-2. A concise description (max 5 words) that captures just the essential visual concept and will be used to generate masks through CLIPSegmentation."""
+2. A concise description (max 4 words) that captures just the essential visual concept / base category / class and will be used to generate masks through CLIPSegmentation."""
 
     response = client.beta.chat.completions.parse(
         model="gpt-4o",  # Using the correct vision model
