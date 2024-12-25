@@ -186,8 +186,13 @@ def remove_vowels(text):
     if text == "":
         return ""
         
+    text = text.strip()
     vowels = 'aeiouAEIOU'
-    return ''.join(char for char in text if char not in vowels)
+    cleaned = ''.join(char for char in text if char not in vowels)
+
+    # remove any extra spaces:
+    cleaned = ' '.join(cleaned.split())
+    return cleaned
 
 from eden_utils import describe_image_concept, gpt4_v_caption_dataset, florence_caption_dataset, clipseg_mask_generator, load_image_with_orientation, auto_detect_training_mode
 

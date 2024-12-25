@@ -8,7 +8,7 @@ from tqdm import tqdm
 from datetime import datetime
 
 # Setup the base experiment config
-exp_name = "banny_final_sweep"
+exp_name = "mira_final_sweep"
 n_exp = 100  # how many random experiment settings to generate
 min_hamming_distance = 1  # min params that have to be different from previous experiments
 nohup = True
@@ -16,34 +16,33 @@ nohup = True
 # Define training hyperparameters and their possible values
 hyperparameters = {
     "dataset_path": [
-        "/data/xander/Projects/cog/GitHub_repos/flux-trainer/datasets/banny_best"
+        "/data/xander/Projects/cog/GitHub_repos/flux-trainer/datasets/mira"
     ],
     "caption_mode": [None],
-    "mode": ["auto"],
-    "caption_prefix": ["a yellow cartoon banana character, with expressive eyes, spotted skin and pink lips wearing a black spiked collar"],
-    "masking_prompt": ["a yellow banana character"],
+    "mode": ["face"],
+    "caption_prefix": ["a bright young girl with a nose ring"],
+    "masking_prompt": ["face"],
+
+    "lora_rank": ["2", "4", "8"],
+    "network_alpha": ["8", "16", "32"],
+    "learning_rate": ["0.25e-4", "1.0e-4"],
+    "ip_noise_gamma": ["0.1"],
+    "noise_offset": ["0.1"],
+
+    "max_train_steps": ["2000"],
+    "save_every_n_steps": ["1000"],
+    "sample_every_n_steps": ["2000"],
+
     "dataset_toml": [
         #"template/dataset_template_512_bs1.toml",
         "template/dataset_template_512_bs4.toml"
     ],
-    "eval_prompts": ["template/eval_prompts_TOK.txt"],  # Keeping this constant
+    "eval_prompts": ["template/eval_prompts_TOK.txt"], 
     "full_finetune": [False],
     "sample_at_first": [False],
-    "lora_rank": ["2", "4", "8"],
-    "network_alpha": ["8", "16", "32"],
-    "learning_rate": ["0.5e-4", "1e-4"],
-    "ip_noise_gamma": ["0.1"],
-    "noise_offset": ["0.1"],
-
-    "max_train_steps": ["1500"],
-    "save_every_n_steps": ["500"],
-    "sample_every_n_steps": ["1500"],
     "gradient_accumulation_steps": ["1"],
-    "seed": ["1"],  # Keeping this constant
-    "MODEL_PATH": [
-        "models/flux-dev-de-distill-diffusers",
-        #"models/flux1-dev.safetensors"
-    ],
+    "seed": ["1"],
+    "MODEL_PATH": ["models/flux-dev-de-distill-diffusers"],
     "CLIP_L_PATH": ["models/clip_l.safetensors"], 
     "T5XXL_PATH": ["models/t5xxl_fp16.safetensors"],
     "AE_PATH": ["models/ae.safetensors"]
