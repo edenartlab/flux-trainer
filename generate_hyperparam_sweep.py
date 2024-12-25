@@ -8,7 +8,7 @@ from tqdm import tqdm
 from datetime import datetime
 
 # Setup the base experiment config
-exp_name = "banny_civit_sweep"
+exp_name = "banny_final_sweep"
 n_exp = 100  # how many random experiment settings to generate
 min_hamming_distance = 1  # min params that have to be different from previous experiments
 nohup = True
@@ -19,7 +19,7 @@ hyperparameters = {
         "/data/xander/Projects/cog/GitHub_repos/flux-trainer/datasets/banny_best"
     ],
     "caption_mode": [None],
-    "mode": ["object"],
+    "mode": ["auto"],
     "caption_prefix": ["a yellow cartoon banana character, with expressive eyes, spotted skin and pink lips wearing a black spiked collar"],
     "masking_prompt": ["a yellow banana character"],
     "dataset_toml": [
@@ -29,15 +29,15 @@ hyperparameters = {
     "eval_prompts": ["template/eval_prompts_TOK.txt"],  # Keeping this constant
     "full_finetune": [False],
     "sample_at_first": [False],
-    "lora_rank": ["2", "4", "10"],
-    "network_alpha": ["2", "4", "10"],
-    "learning_rate": ["0.5e-4"],
-    "ip_noise_gamma": ["0.0", "0.1"],
+    "lora_rank": ["2", "4", "8"],
+    "network_alpha": ["8", "16", "32"],
+    "learning_rate": ["0.5e-4", "1e-4"],
+    "ip_noise_gamma": ["0.1"],
     "noise_offset": ["0.1"],
 
-    "max_train_steps": ["1000"],
+    "max_train_steps": ["1500"],
     "save_every_n_steps": ["500"],
-    "sample_every_n_steps": ["500"],
+    "sample_every_n_steps": ["1500"],
     "gradient_accumulation_steps": ["1"],
     "seed": ["1"],  # Keeping this constant
     "MODEL_PATH": [
