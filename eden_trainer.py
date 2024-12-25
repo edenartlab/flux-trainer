@@ -73,8 +73,8 @@ def main():
             "lora_rank": "4",
             "network_alpha": "16",
             "learning_rate": "0.5e-4",
-            "max_train_steps": "500",
-            "save_every_n_steps": "500",
+            "max_train_steps": "20",
+            "save_every_n_steps": "20",
             "sample_every_n_steps": "2000",
             "gradient_accumulation_steps": "1",
             "noise_offset": "0.1",
@@ -101,16 +101,12 @@ def main():
         # Preprocess the dataset:
         config = prep_dataset(config)
 
-        # Step 5: Construct and run the training command
+        # Construct and run the LoRA training command
         cmd = construct_train_command(config)
         run_job(cmd, config)
 
-        # make thumbnail: 
+        # make sample_grid thumbnail: 
         thumbnail_url = eden_utils.create_thumbnail(config, env=args.env)
-        print(f"Thumbnail URL: {thumbnail_url}")
-
-        if not thumbnail_url:
-            raise ValueError("Failed to create thumbnail")
 
         # upload to eden
         file_url, _ = eden_utils.upload_file(

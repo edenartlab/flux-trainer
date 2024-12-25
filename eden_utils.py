@@ -361,10 +361,11 @@ def create_thumbnail(
 
             # Save and upload grid
             grid_path = output_dir / "sample_grid.jpg"
-            grid_img.save(grid_path, format="JPEG", quality=70)
+            grid_img.save(grid_path, format="JPEG", quality=60)
 
             try:
                 thumbnail_url, _ = upload_file(str(grid_path), env=env)
+                print(f"----> Thumbnail URL: {thumbnail_url}")
                 return thumbnail_url
             except Exception as e:
                 logging.error(f"Failed to upload thumbnail: {e}")
@@ -374,7 +375,6 @@ def create_thumbnail(
         logging.error(f"Thumbnail creation failed: {e}")
         return None
     finally:
-        # Cleanup temporary files
         if 'tmp_file' in locals():
             try:
                 os.unlink(tmp_file.name)
