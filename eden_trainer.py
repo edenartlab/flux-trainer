@@ -23,6 +23,7 @@ def main():
     parser.add_argument('--task_id', help="Eden task ID")
     parser.add_argument('--env', type=str, default="STAGE", choices=["STAGE", "PROD"], help='Environment')
     parser.add_argument('--config', type=str, default="template/train_config.json", help='Path to the training config file (JSON).')
+    parser.add_argument('--local_test', action='store_true', help='Run locally for testing')
     args = parser.parse_args()
 
     # Get task
@@ -62,29 +63,33 @@ def main():
             else:
                 config_json[key] = str(value)
 
-        #####################################################
-        overwrite_dict = {
-            "caption_prefix": "",
-            "dataset_toml": "template/dataset_template_512_bs2.toml",
-            "eval_prompts": "template/eval_prompts_TOK.txt",
-            "mode": "face",
-            "full_finetune": False,
-            "sample_at_first": False,
-            "lora_rank": "4",
-            "network_alpha": "16",
-            "learning_rate": "0.5e-4",
-            "max_train_steps": "20",
-            "save_every_n_steps": "20",
-            "sample_every_n_steps": "2000",
-            "gradient_accumulation_steps": "1",
-            "noise_offset": "0.1",
-            "ip_noise_gamma": "0.1",
-            "MODEL_PATH": "models/flux-dev-de-distill-diffusers" }
+        if args.local_test:
+            print("=====================================================")
+            print(f"WARNING: Running in local test mode, overwriting some training args!")
+            print("=====================================================")
+            #####################################################
+            overwrite_dict = {
+                "caption_prefix": "",
+                "dataset_toml": "template/dataset_template_512_bs2.toml",
+                "eval_prompts": "template/eval_prompts_TOK.txt",
+                "mode": "face",
+                "full_finetune": False,
+                "sample_at_first": False,
+                "lora_rank": "4",
+                "network_alpha": "16",
+                "learning_rate": "0.5e-4",
+                "max_train_steps": "20",
+                "save_every_n_steps": "20",
+                "sample_every_n_steps": "2000",
+                "gradient_accumulation_steps": "1",
+                "noise_offset": "0.1",
+                "ip_noise_gamma": "0.1",
+                "MODEL_PATH": "models/flux-dev-de-distill-diffusers" }
 
-        # Update config_json with overwrite_dict values
-        for key, value in overwrite_dict.items():
-            config_json[key] = value
-        #####################################################
+            # Update config_json with overwrite_dict values
+            for key, value in overwrite_dict.items():
+                config_json[key] = value
+            #####################################################
 
         print(f"Final training arguments for job:")
         print(config_json)
