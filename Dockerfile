@@ -47,7 +47,7 @@ WORKDIR /app/flux-trainer
 # install dependencies
 RUN pip install timm==1.0.9 requests tqdm pymongo huggingface_hub python-dotenv boto3 python-magic openai
 RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-RUN pip install transformers toml
+RUN pip install transformers toml einops accelerate>=0.26.0
 
 # copy download script and download models from huggingface
 COPY download_models.py /app/flux-trainer/
