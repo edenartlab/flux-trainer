@@ -2,6 +2,8 @@ from datetime import datetime
 start_time = datetime.utcnow()
 
 import logging
+import json
+import random
 import sys
 import argparse
 
@@ -62,16 +64,17 @@ def main():
 
         overwrite_dict = {
             "caption_prefix": "",
-            "dataset_toml": "template/dataset_template_512_bs1.toml",
+            "dataset_toml": "template/dataset_template_512_bs2.toml",
             "eval_prompts": "template/eval_prompts_TOK.txt",
+            "mode": "face",
             "full_finetune": False,
             "sample_at_first": False,
             "lora_rank": "4",
             "network_alpha": "16",
             "learning_rate": "0.5e-4",
-            "max_train_steps": "10",
-            "save_every_n_steps": "5",
-            "sample_every_n_steps": "200",
+            "max_train_steps": "500",
+            "save_every_n_steps": "500",
+            "sample_every_n_steps": "2000",
             "gradient_accumulation_steps": "1",
             "noise_offset": "0.1",
             "ip_noise_gamma": "0.1",
@@ -126,7 +129,7 @@ def main():
             "public": False,
             "task": task["_id"],
             "thumbnail": thumbnail_url,
-            "lora_trigger_text": config["caption_prefix"],
+            "lora_trigger_text": config["lora_trigger_text"],
             # "slug": slug,
             "user": task["user"],
             "createdAt": datetime.utcnow(),

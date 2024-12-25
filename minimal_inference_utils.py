@@ -30,20 +30,6 @@ from library.utils import setup_logging, str_to_dtype
 def is_fp8(dt):
     return dt in [torch.float8_e4m3fn, torch.float8_e4m3fnuz, torch.float8_e5m2, torch.float8_e5m2fnuz]
 
-def print_gpu_memory(info_str = ""):
-    """Print the GPU memory usage in GB"""
-    # Get the current GPU device
-    device = torch.cuda.current_device()
-    
-    # Get memory stats
-    memory_allocated = torch.cuda.memory_allocated(device) / 1024**3  # Convert bytes to GB
-    memory_reserved = torch.cuda.memory_reserved(device) / 1024**3    # Convert bytes to GB
-    
-    print(info_str)
-    print(f"GPU Memory Allocated: {memory_allocated:.2f} GB")
-    print(f"GPU Memory Reserved: {memory_reserved:.2f} GB")
-
-
 def time_shift(mu: float, sigma: float, t: torch.Tensor):
     return math.exp(mu) / (math.exp(mu) + (1 / t - 1) ** sigma)
 

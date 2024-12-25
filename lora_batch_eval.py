@@ -25,7 +25,6 @@ from typing import List, Dict, Optional
 from pathlib import Path
 
 import logging
-
 logger = logging.getLogger(__name__)
 
 # add kohya sd-scripts to path:
@@ -257,12 +256,6 @@ def load_flux(args, device):
     t5xxl.eval()
 
     # DiT
-
-    # print contents of model dir:
-    logger.info(f"Contents of parent dir of {args.ckpt_path}:")
-    for item in os.listdir(os.path.dirname(args.ckpt_path)):
-        logger.info(f"  - {item}")
-
     is_schnell, model = flux_utils.load_flow_model(args.ckpt_path, None, loading_device)
     model.eval()
     logger.info(f"Casting model to {flux_dtype}")
@@ -310,7 +303,7 @@ def load_lora(lora_filepaths, config_filepath, args, clip_l, t5xxl, model, ae, d
 
     with open(config_filepath, 'r', encoding='utf-8') as f:
         training_config_data = json.load(f)
-        trigger_words = training_config_data["caption_prefix"]
+        trigger_words = training_config_data["lora_trigger_text"]
 
     return lora_models, trigger_words
 

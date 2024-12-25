@@ -96,7 +96,7 @@ def run_job(cmd: List[str], config: Dict[str, Any]) -> None:
 def create_sample_prompts(config):
     """
     Create the sample prompts for evaluation.
-    Replace any occurence of "TOK" with the trigger_text from the config.
+    Replace any occurence of "TOK" with the lora_trigger_text from the config.
     """
     new_text_lines = []
     # load the source prompts:
@@ -220,7 +220,7 @@ def prep_dataset(config, verbose = True):
         config["masking_prompt"] = ""
     
     # custom hack / trick: generate unique trigger text from the descriptions by just removing vowels:
-    config["trigger_text"] = remove_vowels(config["caption_prefix"])
+    config["lora_trigger_text"] = remove_vowels(config["caption_prefix"])
 
     # Perform dataset captioning if enabled in the config:
     trigger_token = "NO_TRIGGER_INJECTED"
@@ -235,7 +235,7 @@ def prep_dataset(config, verbose = True):
 
     # Inject the final trigger text into the prompts:
     if not config.get("caption_mode"):
-        config["caption_prefix"] = config["trigger_text"]
+        config["caption_prefix"] = config["lora_trigger_text"]
     elif "GPT" in config.get("caption_mode"):
         config["caption_prefix"] = ""
         print("================================================")
@@ -243,7 +243,7 @@ def prep_dataset(config, verbose = True):
         print(f"Trigger text replacement not implemented yet!!!")
         print("================================================")
     else: # florence2:
-        config["caption_prefix"] = config["trigger_text"]
+        config["caption_prefix"] = config["lora_trigger_text"]
     
     if config.get("masking_prompt"):
         # load all images from new_data_dir:

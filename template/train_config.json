@@ -1,5 +1,5 @@
 {
-    "dataset_path": "/data/xander/Projects/cog/GitHub_repos/flux-trainer/datasets/mira",
+    "dataset_path": "dataset_path",
     "caption_mode": null,
     "mode": "face",
     "caption_prefix": "",

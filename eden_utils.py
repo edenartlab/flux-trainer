@@ -17,10 +17,12 @@ from pymongo import MongoClient
 from dotenv import load_dotenv
 import gc
 from pathlib import Path
-
+import torch
 from tqdm import tqdm
 from typing import Optional, List, Tuple, Union, Literal, Dict
+
 import logging
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -206,7 +208,37 @@ def upload_buffer(buffer, name=None, file_type=None, env="STAGE"):
 
     return file_url, name
 
-import torch
+
+def print_gpu_memory():
+    """
+    Print GPU memory usage using only PyTorch's native methods.
+    """
+    try:
+        if not torch.cuda.is_available():
+            logger.info("CUDA not available")
+            return
+
+        for gpu_id in range(torch.cuda.device_count()):
+            # Get memory stats for this GPU
+            with torch.cuda.device(gpu_id):
+                allocated = torch.cuda.memory_allocated() / (1024**3)  # Convert to GB
+                reserved = torch.cuda.memory_reserved() / (1024**3)
+                total = torch.cuda.get_device_properties(gpu_id).total_memory / (1024**3)
+                free = total - allocated
+                
+                # Get device name
+                device_name = torch.cuda.get_device_name(gpu_id)
+                
+                logger.info(f"\nGPU {gpu_id} ({device_name}):")
+                logger.info(f"  Used Memory: {allocated:.2f}GB")
+                logger.info(f"  Reserved Memory: {reserved:.2f}GB")
+                logger.info(f"  Free Memory: {free:.2f}GB")
+                logger.info(f"  Total Memory: {total:.2f}GB")
+                logger.info(f"  Memory Utilization: {(allocated/total)*100:.1f}%")
+
+    except Exception as e:
+        logger.info(f"Error getting GPU memory usage: {e}")
+
 def create_thumbnail(
     config: dict,
     width: int = 1024,
@@ -237,9 +269,7 @@ def create_thumbnail(
     # Print free/used gpu memory using torch cuda:
     print("-----------------------------------------------------")
     print("PRE-thumbnail creation:")
-    print(f"GPU Memory Allocated: {torch.cuda.memory_allocated() / 1024**3:.2f} GB")
-    print(f"GPU Memory reserved: {torch.cuda.memory_reserved() / 1024**3:.2f} GB")
-    print(f"GPU Memory Free: {torch.cuda.memory_reserved() / 1024**3:.2f} GB")
+    print_gpu_memory()
 
     try:
         # Validate inputs
@@ -292,15 +322,28 @@ def create_thumbnail(
 
             # Run generation command (assuming subprocess.run is imported)
             try:
+                gc.collect()
+                torch.cuda.empty_cache()
+                torch.cuda.reset_peak_memory_stats()
+
                 import subprocess
-                result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+
+                env = os.environ.copy()
+                env['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
+                result = subprocess.run(
+                    cmd, 
+                    check=True, 
+                    capture_output=True, 
+                    text=True,
+                    env=env  # Pass the modified environment
+                )
                 logging.info(f"Generation command output: {result.stdout}")
             except subprocess.CalledProcessError as e:
                 logging.error(f"Generation command failed: {e.stderr}")
                 raise
 
             # Create image grid
-            png_files = list(Path(sample_dir).glob("*.png"))
+            png_files = list(Path(sample_dir).glob("*.jpg"))
             sampled_files = random.sample(png_files, n_imgs)
             images = [Image.open(f) for f in sampled_files]
 
@@ -317,11 +360,11 @@ def create_thumbnail(
                 grid_img.paste(img, (x, y))
 
             # Save and upload grid
-            grid_path = f"{sample_dir}_grid.png"
-            grid_img.save(grid_path)
+            grid_path = output_dir / "sample_grid.jpg"
+            grid_img.save(grid_path, format="JPEG", quality=70)
 
             try:
-                thumbnail_url, _ = upload_file(grid_path, env=env)
+                thumbnail_url, _ = upload_file(str(grid_path), env=env)
                 return thumbnail_url
             except Exception as e:
                 logging.error(f"Failed to upload thumbnail: {e}")
