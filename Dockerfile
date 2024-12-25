@@ -48,6 +48,10 @@ WORKDIR /app/flux-trainer
 RUN pip install timm==1.0.9 requests tqdm pymongo huggingface_hub python-dotenv boto3 python-magic openai
 RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 
+# copy download script and download models from huggingface
+COPY download_models.py /app/flux-trainer/
+RUN HF_TOKEN=${HF_TOKEN} python3 download_models.py
+
 # clone and setup sd-scripts
 RUN git clone https://github.com/kohya-ss/sd-scripts.git \
     && cd sd-scripts \
@@ -55,10 +59,6 @@ RUN git clone https://github.com/kohya-ss/sd-scripts.git \
     && git checkout e89653975ddf429cdf0c0fd268da0a5a3e8dba1f \
     && pip install --no-cache-dir -r requirements.txt \
     && cd ..
-
-# copy download script and download models from huggingface
-COPY download_models.py /app/flux-trainer/
-RUN HF_TOKEN=${HF_TOKEN} python3 download_models.py
 
 # copy the rest of the files
 COPY . /app/flux-trainer/
