@@ -8,7 +8,7 @@ from tqdm import tqdm
 from datetime import datetime
 
 # Setup the base experiment config
-exp_name = "mira_final_sweep"
+exp_name = "banny_final_sweep"
 n_exp = 100  # how many random experiment settings to generate
 min_hamming_distance = 2  # min params that have to be different from previous experiments
 nohup = True
@@ -16,12 +16,12 @@ nohup = True
 # Define training hyperparameters and their possible values
 hyperparameters = {
     "dataset_path": [
-        "/data/xander/Projects/cog/GitHub_repos/flux-trainer/datasets/mira"
+        "/data/xander/Projects/cog/GitHub_repos/flux-trainer/datasets/banny_best"
     ],
     "caption_mode": ["<GPT_DETAILED_CAPTION>"],
-    "mode": ["auto"],
-    "caption_prefix": [""],
-    "masking_prompt": [""],
+    "mode": ["object"],
+    "caption_prefix": ["a yellow cartoon banana with a collar"],
+    "masking_prompt": ["yellow banana character"],
 
     "lora_rank": ["2", "4", "8"],
     "network_alpha": ["8", "16", "32"],

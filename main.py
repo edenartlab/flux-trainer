@@ -2,7 +2,7 @@ import logging
 import sys
 import argparse
 from pathlib import Path
-
+import time, json
 from utils import construct_config, prep_dataset, run_job
 from typing import Optional, List, Tuple, Union, Literal, Dict, Any
 from download_dataset import *
@@ -171,6 +171,8 @@ max_grad_norm
 """
 
 def run_trainer(args, verbose = True):
+    start_time = time.time()
+
     # Step 1: Load the training config from the provided file
     config = construct_config(args.config)
 
@@ -189,6 +191,14 @@ def run_trainer(args, verbose = True):
         print(config)
 
     run_job(cmd, config)
+
+    # add total runtime to the config.json in config['output_dir’]:
+    try:
+        config['total_runtime'] = time.time() - start_time
+        with open(config['output_dir'] / 'config.json', 'w') as f:
+            json.dump(config, dict(config), indent=4)
+    except:
+        pass
 
 def main():
     parser = argparse.ArgumentParser(description='Training script for flux network.')

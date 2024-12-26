@@ -226,7 +226,7 @@ def prep_dataset(config, verbose = True):
     # custom hack / trick: generate unique trigger text from the descriptions by just removing vowels:
     #config["lora_trigger_text"] = remove_vowels(config["caption_prefix"])
     descriptor = config["masking_prompt"]
-    config["lora_trigger_text"] = f"Pat Spencer ({descriptor})"
+    config["lora_trigger_text"] = f"{descriptor}"
 
     # Perform dataset captioning if enabled in the config:
     if config.get("caption_mode"):
@@ -245,16 +245,8 @@ def prep_dataset(config, verbose = True):
         config["caption_prefix"] = config["lora_trigger_text"]
     elif "GPT" in config.get("caption_mode"):
         config["caption_prefix"] = ""
-
-
-
-
     else: # florence2:
         config["caption_prefix"] = config["lora_trigger_text"]
-
-    # REMOVE THIS!!!
-    #config["caption_prefix"] = ""
-    #config["lora_trigger_text"] = "a man named Xander Steenbrugge"
 
     ######################################################################################
     ######################################################################################
