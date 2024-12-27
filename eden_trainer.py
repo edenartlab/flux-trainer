@@ -91,6 +91,9 @@ def main():
                 config_json[key] = value
             #####################################################
 
+        # Make sure we're never sampling images before the end of training:
+        config_json["sample_every_n_steps"] = 2*config_json["max_train_steps"]
+
         print(f"Final training arguments for job:")
         print(config_json)
 
