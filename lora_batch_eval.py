@@ -377,8 +377,8 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--ckpt_path", type=str, required=True)
-    parser.add_argument("--lora_root_dir", type=str, required=False, help="Root dir of folders with LoRA weights")
-    parser.add_argument("--lora_path", type=str, required=False, help="Path to single LoRA safetensors file")
+    parser.add_argument("--lora_path", type=str, required=True, 
+                        help="Path to either a single LoRA safetensors file or a directory containing LoRA weights")
     parser.add_argument("--clip_l", type=str, required=False)
     parser.add_argument("--t5xxl", type=str, required=False)
     parser.add_argument("--ae", type=str, required=False)
@@ -402,12 +402,8 @@ if __name__ == "__main__":
     parser.add_argument("--lora_scale", type=float, default=0.9)
     args = parser.parse_args()
 
-    # Validate that exactly one of lora_root_dir or lora_path is provided
-    if bool(args.lora_root_dir) == bool(args.lora_path):
-        parser.error("Exactly one of --lora_root_dir or --lora_path must be provided")
-
     if not args.output_dir:
-        base_name = os.path.basename(args.lora_root_dir if args.lora_root_dir else os.path.dirname(args.lora_path))
+        base_name = os.path.basename(os.path.dirname(args.lora_path) if os.path.isfile(args.lora_path) else args.lora_path)
         args.output_dir = f"evals/{base_name}"
 
     os.makedirs(args.output_dir, exist_ok=True)
@@ -418,24 +414,38 @@ if __name__ == "__main__":
     flux_dtype = str_to_dtype(args.flux_dtype, dtype)
     logger.info(f"Dtypes for clip_l, t5xxl, ae, flux: {clip_l_dtype}, {t5xxl_dtype}, {ae_dtype}, {flux_dtype}")
 
-    if args.lora_path:
+    if os.path.isfile(args.lora_path):
         # Single LoRA evaluation
         config_filepath = os.path.join(os.path.dirname(args.lora_path), "config.json")
         evaluate_lora_checkpoint(args.lora_path, config_filepath, args, device, args.lora_scale)
     else:
-        # Batch evaluation from root directory
-        subfolders = sorted(os.listdir(args.lora_root_dir))
-
-        for i, subfolder in enumerate(subfolders):
-            print("-----------------------------------------")
-            print(f"Evaluating LoRAs from {subfolder} ({i+1} of {len(subfolders)})")
-            print("-----------------------------------------")
-            training_run_folder = os.path.join(args.lora_root_dir, subfolder)
-            lora_filepaths = sorted([os.path.join(training_run_folder, f) for f in os.listdir(training_run_folder) if f.endswith(".safetensors")])
-            lora_filepaths = [f for f in lora_filepaths if "-step000" in f]
-            
-            config_filepath = os.path.join(training_run_folder, "config.json")
-
-            for lora_filepath in lora_filepaths:
+        # Directory evaluation - first check if it's a direct directory with safetensors
+        lora_files = [f for f in os.listdir(args.lora_path) if f.endswith('.safetensors') and '-step000' in f]
+        
+        if lora_files:
+            # Direct directory with LoRA files
+            config_filepath = os.path.join(args.lora_path, "config.json")
+            for file in lora_files:
+                lora_filepath = os.path.join(args.lora_path, file)
                 print(f"Running on {lora_filepath}")
                 evaluate_lora_checkpoint(lora_filepath, config_filepath, args, device, args.lora_scale)
+        else:
+            # Root directory with subfolders
+            subfolders = sorted(os.listdir(args.lora_path))
+            
+            for i, subfolder in enumerate(subfolders):
+                print("-----------------------------------------")
+                print(f"Evaluating LoRAs from {subfolder} ({i+1} of {len(subfolders)})")
+                print("-----------------------------------------")
+                training_run_folder = os.path.join(args.lora_path, subfolder)
+                lora_filepaths = sorted([
+                    os.path.join(training_run_folder, f) 
+                    for f in os.listdir(training_run_folder) 
+                    if f.endswith(".safetensors") and "-step000" in f
+                ])
+                
+                config_filepath = os.path.join(training_run_folder, "config.json")
+
+                for lora_filepath in lora_filepaths:
+                    print(f"Running on {lora_filepath}")
+                    evaluate_lora_checkpoint(lora_filepath, config_filepath, args, device, args.lora_scale)

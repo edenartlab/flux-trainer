@@ -225,27 +225,21 @@ def prep_dataset(config, verbose = True):
     
     # custom hack / trick: generate unique trigger text from the descriptions by just removing vowels:
     #config["lora_trigger_text"] = remove_vowels(config["caption_prefix"])
-    descriptor = config["masking_prompt"]
-    config["lora_trigger_text"] = f"{descriptor}"
+    #config["lora_trigger_text"] = config["masking_prompt"]
+    config["lora_trigger_text"] = config["caption_prefix"]
 
-    # Perform dataset captioning if enabled in the config:
-    if config.get("caption_mode"):
-        print("WARNING: CAPTIONED training is not yet fully implemented!!! Ask Xander!!!")
-        if "GPT" in config.get("caption_mode"):
-            trigger_token = gpt4_v_caption_dataset(
-                config["dataset_path"], 
-                caption_mode=config["caption_mode"], 
-                traininig_mode=config["mode"],
-                lora_trigger_text=config['lora_trigger_text'])
-        else:
-            florence_caption_dataset(config["dataset_path"], caption_mode=config["caption_mode"])
-
-    # Inject the final trigger text into the prompts:
+    # Caption dataset / insert lora_trigger:
     if not config.get("caption_mode"):
         config["caption_prefix"] = config["lora_trigger_text"]
     elif "GPT" in config.get("caption_mode"):
         config["caption_prefix"] = ""
+        trigger_token = gpt4_v_caption_dataset(
+                config["dataset_path"], 
+                caption_mode=config["caption_mode"], 
+                traininig_mode=config["mode"],
+                lora_trigger_text=config['lora_trigger_text'])
     else: # florence2:
+        florence_caption_dataset(config["dataset_path"], caption_mode=config["caption_mode"])
         config["caption_prefix"] = config["lora_trigger_text"]
 
     ######################################################################################
