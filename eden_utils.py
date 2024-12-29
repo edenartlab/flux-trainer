@@ -870,7 +870,7 @@ from transformers import (
 )
 
 @torch.no_grad()
-@torch.cuda.amp.autocast()
+@torch.amp.autocast('cuda')
 def clipseg_mask_generator(
     images: List[Image.Image],
     target_prompts: Union[List[str], str],
