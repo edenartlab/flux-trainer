@@ -8,6 +8,8 @@ import mimetypes
 import magic
 import requests
 import tempfile
+import textwrap
+import concurrent.futures
 from io import BytesIO
 from pydantic import BaseModel
 from openai import OpenAI
@@ -28,24 +30,15 @@ load_dotenv()
 
 MONGO_URI=os.getenv("MONGO_URI")
 MONGO_DB_NAME_STAGE=os.getenv("MONGO_DB_NAME_STAGE")
+MONGO_DB_NAME_PROD=os.getenv("MONGO_DB_NAME_PROD")
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 AWS_REGION_NAME = os.getenv("AWS_REGION_NAME")
 AWS_BUCKET_NAME_STAGE = os.getenv("AWS_BUCKET_NAME_STAGE")
 AWS_BUCKET_NAME_PROD = os.getenv("AWS_BUCKET_NAME_PROD")
 
-client = MongoClient(MONGO_URI)
-try:
-    db = client[MONGO_DB_NAME_STAGE]
-    models_collection = db["models"]
-    tasks_collection = db["tasks2"]
-    users_collection = db["users"]
-except: # allows running the main trainer code without interacting with our mongo db
-    db = None
-    models_collection = None
-    tasks_collection = None
-    users_collection = None
 
+client = MongoClient(MONGO_URI)
 
 s3 = boto3.client(
     's3', 
@@ -72,6 +65,11 @@ file_extensions = {
     'application/zip': '.zip',
     'application/octet-stream': '.safetensors'
 }
+
+
+def get_collection(collection_name, db):
+    db = client[MONGO_DB_NAME_PROD] if db == "PROD" else client[MONGO_DB_NAME_STAGE]
+    return db[collection_name]
 
 
 def PIL_to_bytes(image, ext="JPEG", quality=95):
@@ -122,13 +120,13 @@ def make_slug(task):
     slug = f"{username}/{name}/v{version}"
     return slug
 
-def get_root_url(env="STAGE"):
+def get_root_url(db="STAGE"):
     """Returns the root URL for the specified bucket."""
-    bucket_name = s3_buckets[env]
+    bucket_name = s3_buckets[db]
     return f"https://{bucket_name}.s3.{AWS_REGION_NAME}.amazonaws.com"
     
     
-def upload_file_from_url(url, name=None, file_type=None, env="STAGE"):
+def upload_file_from_url(url, name=None, file_type=None, db="STAGE"):
     """Uploads a file to an S3 bucket by downloading it to a temporary file and uploading it to S3."""
 
     with requests.get(url, stream=True) as r:
@@ -138,26 +136,26 @@ def upload_file_from_url(url, name=None, file_type=None, env="STAGE"):
                 tmp_file.write(chunk)
             tmp_file.flush()
             tmp_file.seek(0)
-            return upload_file(tmp_file.name, name, file_type, env)
+            return upload_file(tmp_file.name, name, file_type, db)
 
 
-def upload_file(file_path, name=None, file_type=None, env="STAGE"):
+def upload_file(file_path, name=None, file_type=None, db="STAGE"):
     """Uploads a file to an S3 bucket and returns the file URL."""
 
     if file_path.startswith('http://') or file_path.startswith('https://'):
-        return upload_file_from_url(file_path, name, file_type, env)
+        return upload_file_from_url(file_path, name, file_type, db)
     
     with open(file_path, 'rb') as file:
         buffer = file.read()
 
-    return upload_buffer(buffer, name, file_type, env)    
+    return upload_buffer(buffer, name, file_type, db)    
 
 
-def upload_buffer(buffer, name=None, file_type=None, env="STAGE"):
+def upload_buffer(buffer, name=None, file_type=None, db="STAGE"):
     """Uploads a buffer to an S3 bucket and returns the file URL."""
     
-    assert file_type in [None, '.jpg', '.webp', '.png', '.mp3', 'mp4', '.flac', '.wav'], \
-        "file_type must be one of ['.jpg', '.webp', '.png', '.mp3', 'mp4', '.flac', '.wav']"
+    assert file_type in [None, '.jpg', '.webp', '.png', '.mp3', 'mp4', '.flac', '.wav', '.safetensors'], \
+        "file_type must be one of ['.jpg', '.webp', '.png', '.mp3', 'mp4', '.flac', '.wav', '.safetensors']"
 
     if isinstance(buffer, Iterator):
         buffer = b"".join(buffer)
@@ -193,7 +191,7 @@ def upload_buffer(buffer, name=None, file_type=None, env="STAGE"):
     filename = f"{name}{file_type}"
     file_bytes = io.BytesIO(buffer)
     
-    bucket_name = s3_buckets[env]
+    bucket_name = s3_buckets[db]
 
     s3.upload_fileobj(
         file_bytes, 
@@ -207,6 +205,22 @@ def upload_buffer(buffer, name=None, file_type=None, env="STAGE"):
     print(f"==> Uploaded: {file_url}")
 
     return file_url, name
+
+
+def make_slug(task, db):
+    """Makes a slug from a task."""
+
+    users_collection = get_collection("users3", db)
+    models_collection = get_collection("models3", db)
+    
+    task_args = task["args"]
+    name = task_args["name"].lower().replace(" ", "-")
+    username = users_collection.find_one({"_id": task["user"]})["username"]
+    existing_docs = list(models_collection.find({"slug": {"$regex": f"^{username}/{name}/v"}}))
+    versions = [int(doc['slug'].split('/')[-1][1:]) for doc in existing_docs if doc.get('slug')]
+    version = max(versions or [0]) + 1
+    slug = f"{username}/{name}/v{version}"
+    return slug
 
 
 def print_gpu_memory():
@@ -239,13 +253,14 @@ def print_gpu_memory():
     except Exception as e:
         logger.info(f"Error getting GPU memory usage: {e}")
 
+
 def create_thumbnail(
     config: dict,
     width: int = 1024,
     height: int = 1024,
     n_steps: int = 35,
     n_imgs: int = 4,
-    env: str = "STAGE"
+    db: str = "STAGE"
 ) -> Optional[str]:
     """
     Creates a thumbnail grid with generated samples from the trainer LoRA.
@@ -364,7 +379,7 @@ def create_thumbnail(
             grid_img.save(grid_path, format="JPEG", quality=60)
 
             try:
-                thumbnail_url, _ = upload_file(str(grid_path), env=env)
+                thumbnail_url, _ = upload_file(str(grid_path), db=db)
                 print(f"----> Thumbnail URL: {thumbnail_url}")
                 return thumbnail_url
             except Exception as e:
@@ -381,8 +396,6 @@ def create_thumbnail(
             except OSError:
                 pass
 
-import textwrap
-import concurrent.futures
 
 def gpt4_v_caption_dataset(
     dataset_dir,               
