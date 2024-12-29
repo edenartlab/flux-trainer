@@ -113,7 +113,7 @@ def construct_train_command(config: Dict[str, Any]) -> List[str]:
             "--lr_scheduler_num_cycles", "3",
             #"--lr_scheduler", "constant_with_warmup",
             #"--lr_warmup_steps", "0.05",
-            "--network_alpha", config["network_alpha"],
+            "--network_alpha", config["lora_rank"],
             "--min_snr_gamma", "5",
             "--cache_latents_to_disk",
             "--cache_text_encoder_outputs_to_disk",

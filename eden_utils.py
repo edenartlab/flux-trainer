@@ -570,8 +570,8 @@ def describe_image_concept(images_dir, mode, n=6):
     ]
 
     if mode == "style":
-        gpt_task_description = """Provide two descriptions of the shared concept in these images:
-1. A detailed visual description of the shared style/aesthetic in these images of maximum 10 words. Always start with the main category of the images (cartoon, lineart sketch, painting, photograph, ...) followed by the key visual features (like stylistic hints, colors, shapes, ...) of the shared visual aesthetic, avoiding abstract words or interpretations. Your description should help someone generate a specific, representative example of the style.
+        gpt_task_description = """Provide two descriptions of the shared style in these images:
+1. A detailed visual description of the shared style/aesthetic in these images of maximum 10 words (ignore the specific objects or characters in each image, just focus on the style). Always start with the main category of the images (cartoon, lineart sketch, painting, photograph, ...) followed by the key visual features (like stylistic hints, colors, shapes, ...) of the shared visual aesthetic, avoiding abstract words or interpretations. Your description should help someone generate a specific, representative example of the style.
 2. A more concise description (max 4 words) that captures just the essentials of the visual style."""
     else:
         gpt_task_description = """Provide two descriptions of the shared concept in these images:
