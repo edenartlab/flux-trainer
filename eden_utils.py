@@ -7,6 +7,7 @@ import hashlib
 import mimetypes
 import magic
 import requests
+import warnings
 import tempfile
 from io import BytesIO
 from pydantic import BaseModel
@@ -886,7 +887,7 @@ def clipseg_mask_generator(
     """
     Returns a greyscale mask for each image based on the target_prompt.
     """
-
+    warnings.filterwarnings("ignore", message=".*not valid for.*ViTImageProcessor.*")
     print(f"Generating CLIPSeg masks for {len(images)} images...", flush=True)
 
     if isinstance(target_prompts, str):
