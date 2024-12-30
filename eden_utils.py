@@ -7,6 +7,7 @@ import hashlib
 import mimetypes
 import magic
 import requests
+import warnings
 import tempfile
 import textwrap
 import concurrent.futures
@@ -876,7 +877,7 @@ def load_image_with_orientation(path, mode="RGB"):
 
 
 @torch.no_grad()
-@torch.cuda.amp.autocast()
+@torch.amp.autocast('cuda')
 def clipseg_mask_generator(
     images: List[Image.Image],
     target_prompts: Union[List[str], str],
@@ -892,7 +893,7 @@ def clipseg_mask_generator(
     """
     Returns a greyscale mask for each image based on the target_prompt.
     """
-
+    warnings.filterwarnings("ignore", message=".*not valid for.*ViTImageProcessor.*")
     print(f"Generating CLIPSeg masks for {len(images)} images...", flush=True)
 
     if isinstance(target_prompts, str):
