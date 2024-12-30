@@ -34,7 +34,8 @@ def main():
         raise ValueError(f"Task {args.task_id} not found!")
 
     try:
-        wait_time = (start_time - task["createdAt"]).total_seconds()
+        created_at = task["createdAt"].replace(tzinfo=timezone.utc)
+        wait_time = (start_time - created_at).total_seconds()
 
         # Mark task status running
         tasks_collection.update_one(

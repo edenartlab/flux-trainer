@@ -22,6 +22,10 @@ from pathlib import Path
 import torch
 from tqdm import tqdm
 from typing import Optional, List, Tuple, Union, Literal, Dict
+from transformers import (
+    CLIPSegForImageSegmentation,
+    CLIPSegProcessor
+)
 
 import logging
 logger = logging.getLogger(__name__)
@@ -646,13 +650,7 @@ def auto_detect_training_mode(images_dir, n_img_samples = 6):
         - If they show primarily one specific object, character, or thing, select 'object'
         - If they show primarily an artistic style, aesthetic, or diverse subjects in a consistent style, select 'style'
         """
-        mode: str
-
-        @field_validator('mode')
-        def validate_mode(cls, v):
-            if v not in ['face', 'object', 'style']:
-                raise ValueError(f'mode must be one of: face, object, style but was {v}')
-            return v
+        mode: Literal['face', 'object', 'style']
 
     image_attachments = [
         {
@@ -876,11 +874,6 @@ def load_image_with_orientation(path, mode="RGB"):
     # Convert to the desired mode
     return image.convert(mode)
 
-
-from transformers import (
-    CLIPSegForImageSegmentation,
-    CLIPSegProcessor
-)
 
 @torch.no_grad()
 @torch.cuda.amp.autocast()
