@@ -113,17 +113,6 @@ def prep_img_for_gpt_api(image, max_size=(512, 512)):
     img.save(buffer, format="JPEG")
     return base64.b64encode(buffer.getvalue()).decode('utf-8')
 
-def make_slug(task):
-    """Makes a slug from a task."""
-
-    task_args = task["args"]
-    name = task_args["name"].lower().replace(" ", "-")
-    existing_docs = list(models_collection.find({"name": name, "user": task["user"]}))
-    versions = [int(doc.get('slug', '').split('/')[-1][1:]) for doc in existing_docs if doc.get('slug')]
-    version = max(versions or [0]) + 1
-    username = users_collection.find_one({"_id": task["user"]})["username"]
-    slug = f"{username}/{name}/v{version}"
-    return slug
 
 def get_root_url(db="STAGE"):
     """Returns the root URL for the specified bucket."""
