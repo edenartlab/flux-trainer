@@ -162,13 +162,15 @@ def main():
                     "runTime": run_time,
                 },
                 "result": [{
-                    "filename": file_url.split("/")[-1],
-                    "metadata": config,
-                    "mediaAttributes": {
-                        "mimeType": "application/zip"
-                    },
-                    "thumbnail": thumbnail_filename,
-                    "model": model_id
+                    "output": [{
+                        "filename": file_url.split("/")[-1],
+                        "metadata": config,
+                        "mediaAttributes": {
+                            "mimeType": "application/zip"
+                        },
+                        "thumbnail": thumbnail_filename,
+                        "model": model_id
+                    }],
                 }],
                 "updatedAt": datetime.now(timezone.utc),
             }}
