@@ -18,7 +18,6 @@ import torch
 from tqdm import tqdm
 from PIL import Image
 import accelerate
-from transformers import CLIPTextModel
 from safetensors.torch import load_file
 
 from typing import List, Dict, Optional
@@ -43,7 +42,7 @@ init_ipex()
 setup_logging()
 
 def encode_prompts(
-    clip_l: CLIPTextModel,
+    clip_l,
     t5xxl,
     tokenize_strategy, 
     encoding_strategy,

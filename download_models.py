@@ -3,13 +3,13 @@ import os
 import subprocess
 from dotenv import load_dotenv
 
+from utils import clipseg_mask_generator
+from PIL import Image
+
 #workaround for unnecessary flash_attn requirement
 from unittest.mock import patch
 from transformers.dynamic_module_utils import get_imports
 from transformers import AutoProcessor, AutoModelForCausalLM 
-
-from utils import clipseg_mask_generator
-from PIL import Image
 
 def fixed_get_imports(filename: str | os.PathLike) -> list[str]:
     if not str(filename).endswith("modeling_florence2.py"):

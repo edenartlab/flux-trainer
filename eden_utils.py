@@ -10,6 +10,7 @@ import requests
 import warnings
 import tempfile
 import textwrap
+import subprocess
 import concurrent.futures
 from io import BytesIO
 from pydantic import BaseModel
@@ -310,7 +311,7 @@ def create_thumbnail(
             safetensor_files = list(output_dir.glob("*.safetensors"))
             lora_path = max(safetensor_files, key=lambda p: p.stat().st_mtime)
 
-            print(f"Generating validation grid of {n_imgs} imgs with {lora_path}")
+            logger.info(f"Generating validation grid of {n_imgs} imgs with {lora_path}")
 
             # Prepare generation command
             cmd = [
@@ -329,16 +330,16 @@ def create_thumbnail(
                 "--height", str(height)
             ]
 
-            # Run generation command (assuming subprocess.run is imported)
             try:
                 gc.collect()
                 torch.cuda.empty_cache()
                 torch.cuda.reset_peak_memory_stats()
 
-                import subprocess
-
                 process_env = os.environ.copy()
-                process_env['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
+                #process_env['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
+
+                logger.info(f"Running cmd: {cmd}")
+
                 result = subprocess.run(
                     cmd, 
                     check=True, 
@@ -382,7 +383,10 @@ def create_thumbnail(
 
     except Exception as e:
         logging.error(f"Thumbnail creation failed: {e}")
-        return None
+        logging.error(f"Falling back to default thumbnail...")
+        grid_path = "EDEN.jpg"
+        thumbnail_url, _ = upload_file(str(grid_path), db=db)
+        return thumbnail_url
     finally:
         if 'tmp_file' in locals():
             try:

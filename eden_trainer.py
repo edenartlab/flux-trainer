@@ -77,11 +77,10 @@ def main():
                 "mode": "face",
                 "full_finetune": False,
                 "sample_at_first": False,
-                "lora_rank": "4",
-                "network_alpha": "16",
+                "lora_rank": "8",
                 "learning_rate": "0.5e-4",
-                "max_train_steps": "20",
-                "save_every_n_steps": "20",
+                "max_train_steps": "10",
+                "save_every_n_steps": "10",
                 "sample_every_n_steps": "2000",
                 "gradient_accumulation_steps": "1",
                 "noise_offset": "0.1",
@@ -116,8 +115,10 @@ def main():
         run_job(cmd, config)
 
         # make sample_grid thumbnail: 
+        print("Starting thumbnail generation subprocess...")
         thumbnail_url = eden_utils.create_thumbnail(config, db=args.db)
         thumbnail_filename = thumbnail_url.split("/")[-1]
+        print(f"Thumbnail url: {thumbnail_url}")
 
         # upload to eden
         file_url, _ = eden_utils.upload_file(
@@ -125,7 +126,7 @@ def main():
             file_type=".safetensors",
             db=args.db
         )
-        print("file_url", file_url)
+        print("Uploaded LoRA to Eden, file_url:", file_url)
 
         # make slug
         # slug = eden_utils.make_slug(task)
