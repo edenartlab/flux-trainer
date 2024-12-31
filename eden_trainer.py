@@ -115,8 +115,14 @@ def main():
         run_job(cmd, config)
 
         # make sample_grid thumbnail: 
-        print("Starting thumbnail generation subprocess...")
-        thumbnail_url = eden_utils.create_thumbnail(config, db=args.db)
+        if 0:
+            print("Starting thumbnail generation subprocess...")
+            thumbnail_url = eden_utils.create_thumbnail(config, db=args.db)
+        else:
+            grid_path = "EDEN.jpg"
+            print("Uploading EDEN default thumbnail to db...")
+            thumbnail_url, _ = eden_utils.upload_file(str(grid_path), db=args.db)
+
         thumbnail_filename = thumbnail_url.split("/")[-1]
         print(f"Thumbnail url: {thumbnail_url}")
 
