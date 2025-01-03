@@ -157,6 +157,7 @@ OPTIONAL ARGS:
 
 args to test out from sd-scripts/library/train_util.py:
 
+test schedule_free optimizer
 --min_snr_gamma 5
 loss_type
 gradient_accumulation_steps
