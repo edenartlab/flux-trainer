@@ -115,7 +115,7 @@ def main():
         run_job(cmd, config)
 
         # make sample_grid thumbnail: 
-        if 0:
+        if 1:
             print("Starting thumbnail generation subprocess...")
             thumbnail_url = eden_utils.create_thumbnail(config, db=args.db)
         else:

@@ -47,6 +47,11 @@ WORKDIR /app/flux-trainer
 # install dependencies
 RUN pip install timm==1.0.9 requests tqdm pymongo huggingface_hub python-dotenv boto3 python-magic openai toml
 RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+RUN pip install accelerate==0.33.0 transformers==4.44.0 diffusers[torch]==0.25.0 huggingface-hub==0.24.5 einops==0.7.0
+
+# copy download script and download models from huggingface
+COPY download_models.py /app/flux-trainer/
+RUN HF_TOKEN=${HF_TOKEN} python3 download_models.py
 
 # clone and setup sd-scripts
 # this will install specific versions of many dependencies (einops, transformers, accelerate, ...)
@@ -60,11 +65,7 @@ RUN git clone https://github.com/kohya-ss/sd-scripts.git \
     && pip install --no-cache-dir -r requirements.txt \
     && cd ..
 
-# copy download script and download models from huggingface
-COPY download_models.py /app/flux-trainer/
-RUN HF_TOKEN=${HF_TOKEN} python3 download_models.py
-
-# copy the rest of the files
+# copy the rest of the local files
 COPY . /app/flux-trainer/
 
 # Set the default command to python

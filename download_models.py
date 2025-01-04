@@ -67,7 +67,7 @@ def download_flux(models_dir):
     # List of models and paths to download
     models_to_download = [
         ('black-forest-labs/FLUX.1-dev', 'ae.safetensors'),
-        #('black-forest-labs/FLUX.1-dev', 'flux1-dev.safetensors'),
+        ('black-forest-labs/FLUX.1-dev', 'flux1-dev.safetensors'),
         ('comfyanonymous/flux_text_encoders', 'clip_l.safetensors'),
         ('comfyanonymous/flux_text_encoders', 't5xxl_fp16.safetensors')
     ]

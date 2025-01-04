@@ -28,6 +28,14 @@ from transformers import (
     CLIPSegForImageSegmentation,
     CLIPSegProcessor
 )
+import signal
+
+def signal_handler(signum, frame):
+    logging.error(f"Received signal {signum}")
+    raise SystemExit(1)
+
+signal.signal(signal.SIGTERM, signal_handler)
+signal.signal(signal.SIGINT, signal_handler)
 
 import logging
 logger = logging.getLogger(__name__)
@@ -330,26 +338,28 @@ def create_thumbnail(
                 "--height", str(height)
             ]
 
+            gc.collect()
+            torch.cuda.empty_cache()
+            torch.cuda.reset_peak_memory_stats()
+
+            process_env = os.environ.copy()
+            #process_env['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
+            logger.info(f"Running cmd: {cmd}")
+
             try:
-                gc.collect()
-                torch.cuda.empty_cache()
-                torch.cuda.reset_peak_memory_stats()
-
-                process_env = os.environ.copy()
-                #process_env['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
-
-                logger.info(f"Running cmd: {cmd}")
-
                 result = subprocess.run(
-                    cmd, 
-                    check=True, 
-                    capture_output=True, 
+                    cmd,
+                    check=True,
+                    capture_output=True,
                     text=True,
-                    env=process_env  # Pass the modified environment
+                    env=process_env
                 )
                 logging.info(f"Generation command output: {result.stdout}")
+                logging.info(f"Generation command stderr: {result.stderr}")  # Add this to also log stderr even on success
             except subprocess.CalledProcessError as e:
-                logging.error(f"Generation command failed: {e.stderr}")
+                logging.error(f"Generation command failed with return code {e.returncode}")
+                logging.error(f"stdout: {e.stdout}")
+                logging.error(f"stderr: {e.stderr}")
                 raise
 
             # Create image grid
