@@ -4,6 +4,8 @@ import json
 import random
 import sys
 import argparse
+import os
+from urllib.parse import urlparse
 
 import eden_utils
 from main import *
@@ -15,6 +17,10 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s', 
     stream=sys.stdout
 )
+
+def get_filename_from_url(url):
+    path = urlparse(url).path
+    return os.path.basename(path)
 
 def main():
     start_time = datetime.now(timezone.utc)
@@ -123,7 +129,6 @@ def main():
             print("Uploading EDEN default thumbnail to db...")
             thumbnail_url, _ = eden_utils.upload_file(str(grid_path), db=args.db)
 
-        thumbnail_filename = thumbnail_url.split("/")[-1]
         print(f"Thumbnail url: {thumbnail_url}")
 
         # upload to eden
@@ -134,6 +139,10 @@ def main():
         )
         print("Uploaded LoRA to Eden, file_url:", file_url)
 
+        # Extract filenames from urls:
+        thumbnail_filename = get_filename_from_url(thumbnail_url)
+        lora_filename      = get_filename_from_url(file_url)
+
         # make slug
         # slug = eden_utils.make_slug(task)
 
@@ -141,10 +150,11 @@ def main():
         models_collection = get_collection("models3", db=args.db)
         model_id = models_collection.insert_one({
             "args": task_args,
-            "checkpoint": file_url,
+            "checkpoint": lora_filename,
             "base_model": "flux-dev",
             "name": task_args["name"],
             "public": False,
+            "deleted": False,
             "task": task["_id"],
             "thumbnail": thumbnail_filename,
             "lora_trigger_text": config["lora_trigger_text"],
@@ -170,7 +180,7 @@ def main():
                 },
                 "result": [{
                     "output": [{
-                        "filename": file_url.split("/")[-1],
+                        "filename": lora_filename,
                         "metadata": config,
                         "mediaAttributes": {
                             "mimeType": "application/zip"
