@@ -337,6 +337,7 @@ def create_thumbnail(
                 torch.cuda.reset_peak_memory_stats()
 
                 process_env = os.environ.copy()
+                #process_env['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
                 
                 logger.info(f"Running cmd: {cmd}")
 
