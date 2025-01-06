@@ -1,6 +1,5 @@
 import io
 import os
-import sys
 import random
 import base64
 import boto3
@@ -338,39 +337,19 @@ def create_thumbnail(
 
                 process_env = os.environ.copy()
                 #process_env['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
-                
+
                 logger.info(f"Running cmd: {cmd}")
 
-                # Remove capture_output and text parameters, add stdout/stderr as PIPE
-                process = subprocess.Popen(
-                    cmd,
-                    env=process_env,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    universal_newlines=True,
-                    bufsize=1
+                result = subprocess.run(
+                    cmd, 
+                    check=True, 
+                    capture_output=True, 
+                    text=True,
+                    env=process_env  # Pass the modified environment
                 )
-
-                # Read output in real-time
-                while True:
-                    output = process.stdout.readline()
-                    error = process.stderr.readline()
-                    
-                    if output:
-                        print(output.strip())
-                    if error:
-                        print(error.strip(), file=sys.stderr)
-                    
-                    # Check if process has finished
-                    if output == '' and error == '' and process.poll() is not None:
-                        break
-
-                # Check return code after process completes
-                if process.returncode != 0:
-                    raise subprocess.CalledProcessError(process.returncode, cmd)
-
+                logging.info(f"Generation command output: {result.stdout}")
             except subprocess.CalledProcessError as e:
-                logging.error(f"Generation command failed with return code {e.returncode}")
+                logging.error(f"Generation command failed: {e.stderr}")
                 raise
 
             # Create image grid
