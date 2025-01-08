@@ -211,9 +211,14 @@ def prep_dataset(config, verbose = True):
     if not config.get("mode") or config.get("mode") == "auto":
         config["mode"] = auto_detect_training_mode(config["dataset_path"])
 
+    ######################################################################################
+    ######################################################################################
 
-    ######################################################################################
-    ######################################################################################
+    # hardcoded feature to disable caption_prefix:
+    if (config["caption_prefix"] == "no_caption_prefix") and (config["mode"] == "style"):
+        disable_caption_prefix = True 
+    else:
+        disable_caption_prefix = False
 
     # Generate GPT-4 V caption_prefix and masking_prompt if not provided in the config:
     if (not config.get("caption_prefix") or not config.get("masking_prompt")):
@@ -241,6 +246,11 @@ def prep_dataset(config, verbose = True):
     else: # florence2:
         florence_caption_dataset(config["dataset_path"], caption_mode=config["caption_mode"])
         config["caption_prefix"] = config["lora_trigger_text"]
+
+    if disable_caption_prefix:
+        print("WARNING: DISABLING ALL CAPTION PREFIXES!!!!")
+        config["caption_prefix"] = ""
+        config["lora_trigger_text"] = ""
 
     ######################################################################################
     ######################################################################################
