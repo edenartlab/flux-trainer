@@ -79,7 +79,7 @@ def main():
             overwrite_dict = {
                 "caption_prefix": "",
                 "dataset_toml": "template/dataset_template_512_bs2.toml",
-                "eval_prompts": "template/eval_prompts_TOK.txt",
+                "eval_prompts": "template/grid_prompts_small.txt",
                 "mode": "face",
                 "full_finetune": False,
                 "sample_at_first": False,
@@ -99,7 +99,8 @@ def main():
             #####################################################
 
         # Make sure we're sampling images just once at the end of training:
-        config_json["sample_every_n_steps"] = config_json["max_train_steps"]
+        config_json["sample_every_n_steps"] = 2*config_json["max_train_steps"]
+        config_json["save_every_n_steps"] = config_json["max_train_steps"]
 
         print(f"Final training arguments for job:")
         print(config_json)
@@ -124,7 +125,7 @@ def main():
         if 0: # Generate thumbnails with full FLUX model (doesnt work)
             print("Starting thumbnail generation subprocess...")
             thumbnail_url = eden_utils.create_thumbnail(config, db=args.db)
-        elif 0: # just upload default EDEN thumbnail
+        elif 1: # just upload default EDEN thumbnail
             grid_path = "EDEN.jpg"
             print("Uploading EDEN default thumbnail to db...")
             thumbnail_url, _ = eden_utils.upload_file(str(grid_path), db=args.db)
