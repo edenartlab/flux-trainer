@@ -1,0 +1,18 @@
+[[datasets]]
+batch_size = 4
+enable_bucket = true
+resolution = 512
+min_bucket_reso = 256
+max_bucket_reso = 1024
+bucket_reso_steps = 64
+[[datasets.subsets]]
+image_dir = "/data/xander/Projects/cog/GitHub_repos/flux-trainer/datasets/banny_plantoid"
+num_repeats = 12
+caption_prefix = ""
+
+[general]
+flip_aug = true
+color_aug = false
+shuffle_caption = false
+caption_tag_dropout_rate = 0.0
+caption_extension = ".txt"

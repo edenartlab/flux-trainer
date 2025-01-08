@@ -285,7 +285,6 @@ def prep_dataset(config, verbose = True):
     with open(Path(config["output_dir"]) / "config.json", 'w') as f:
         json.dump(serializable_config, f, indent=4)
 
-
     if verbose:
         print("==========================================")
         print("==========================================")

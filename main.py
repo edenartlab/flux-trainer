@@ -191,6 +191,9 @@ def run_trainer(args, verbose = True):
         print(" ========= Final Train Config: ==========")
         print(config)
 
+    final_cmd = " ".join(cmd)
+    print(f"Running cmd: \n{final_cmd}")
+
     run_job(cmd, config)
 
     # add total runtime to the config.json in config['output_dir’]:
