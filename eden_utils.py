@@ -248,7 +248,7 @@ def print_gpu_memory():
     except Exception as e:
         logger.info(f"Error getting GPU memory usage: {e}")
 
-def combine_samples_into_grid(sample_dir, env="STAGE"):
+def combine_samples_into_grid(sample_dir, db="STAGE"):
     """Creates a thumbnail from a sample directory."""
 
     png_files = [f for f in os.listdir(sample_dir) if f.endswith('.png')]
@@ -270,7 +270,7 @@ def combine_samples_into_grid(sample_dir, env="STAGE"):
 
     thumbnail_url, _ = upload_file(
         f"{sample_dir}.jpg",
-        env=env
+        db=db
     )
 
     return thumbnail_url

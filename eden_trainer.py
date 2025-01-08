@@ -130,7 +130,7 @@ def main():
             thumbnail_url, _ = eden_utils.upload_file(str(grid_path), db=args.db)
         else: # Generate thumbnails with sample images from the flux-dev-de-distill training job itself (not ideal, but ok for now)
             sample_dir = os.path.join(config["output_dir"], "sample")
-            thumbnail_url = eden_utils.combine_samples_into_grid(sample_dir, env=args.db)
+            thumbnail_url = eden_utils.combine_samples_into_grid(sample_dir, db=args.db)
 
         print(f"Thumbnail url: {thumbnail_url}")
 
