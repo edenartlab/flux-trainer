@@ -1,10 +1,10 @@
 {
-    "dataset_path": "/data/xander/Projects/cog/GitHub_repos/flux-trainer/datasets/banny_best",
-    "mode": "style",
-    "caption_mode": null,
-    "guidance_scale": "1.0",
-    "caption_prefix": "",
+    "dataset_path": "/home/rednax/Documents/datasets/01_people/xander_mini",
+    "mode": "face",
+    "caption_mode": "<GPT_CAPTION>",
     "masking_prompt": "",
+    "guidance_scale": "1.0",
+    "caption_prefix": "Xander Steenbrugge, a handsome man from Belgium with a mustache",
     "dataset_toml": "template/dataset_template_512_bs4.toml",
     "eval_prompts": "template/grid_prompts_style.txt",
 
