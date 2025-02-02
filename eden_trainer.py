@@ -79,7 +79,7 @@ def main():
             overwrite_dict = {
                 "caption_prefix": "",
                 "dataset_toml": "template/dataset_template_512_bs2.toml",
-                "eval_prompts": "template/eval_prompts_TOK.txt",
+                "eval_prompts": "template/grid_prompts_small.txt",
                 "mode": "face",
                 "full_finetune": False,
                 "sample_at_first": False,
@@ -98,8 +98,9 @@ def main():
                 config_json[key] = value
             #####################################################
 
-        # Make sure we're never sampling images before the end of training:
+        # Make sure we're sampling images just once at the end of training:
         config_json["sample_every_n_steps"] = 2*config_json["max_train_steps"]
+        config_json["save_every_n_steps"] = config_json["max_train_steps"]
 
         print(f"Final training arguments for job:")
         print(config_json)
@@ -121,13 +122,16 @@ def main():
         run_job(cmd, config)
 
         # make sample_grid thumbnail: 
-        if 0:
+        if 0: # Generate thumbnails with full FLUX model (doesnt work)
             print("Starting thumbnail generation subprocess...")
             thumbnail_url = eden_utils.create_thumbnail(config, db=args.db)
-        else:
+        elif 1: # just upload default EDEN thumbnail
             grid_path = "EDEN.jpg"
             print("Uploading EDEN default thumbnail to db...")
             thumbnail_url, _ = eden_utils.upload_file(str(grid_path), db=args.db)
+        else: # Generate thumbnails with sample images from the flux-dev-de-distill training job itself (not ideal, but ok for now)
+            sample_dir = os.path.join(config["output_dir"], "sample")
+            thumbnail_url = eden_utils.combine_samples_into_grid(sample_dir, db=args.db)
 
         print(f"Thumbnail url: {thumbnail_url}")
 
@@ -158,6 +162,7 @@ def main():
             "task": task["_id"],
             "thumbnail": thumbnail_filename,
             "lora_trigger_text": config["lora_trigger_text"],
+            "lora_mode": config["mode"],
             # "slug": slug,
             "user": task["user"],
             "requester": task["requester"],

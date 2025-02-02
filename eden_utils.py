@@ -248,6 +248,33 @@ def print_gpu_memory():
     except Exception as e:
         logger.info(f"Error getting GPU memory usage: {e}")
 
+def combine_samples_into_grid(sample_dir, db="STAGE"):
+    """Creates a thumbnail from a sample directory."""
+
+    png_files = [f for f in os.listdir(sample_dir) if f.endswith('.png')]
+    
+    if len(png_files) < 4:
+        print("Not enough sample images to create a 2x2 grid.")
+        return None
+
+    sampled_files = random.sample(png_files, 4)
+    images = [Image.open(os.path.join(sample_dir, f)) for f in sampled_files]
+    img_size = images[0].size[0]
+    grid_img = Image.new('RGB', (img_size * 2, img_size * 2))
+
+    for i, img in enumerate(images):
+        img = img.resize((img_size, img_size))
+        grid_img.paste(img, ((i % 2) * img_size, (i // 2) * img_size))
+
+    grid_img.save(f"{sample_dir}.jpg", format="JPEG", quality=70)
+
+    thumbnail_url, _ = upload_file(
+        f"{sample_dir}.jpg",
+        db=db
+    )
+
+    return thumbnail_url
+        
 
 def create_thumbnail(
     config: dict,

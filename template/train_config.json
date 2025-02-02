@@ -6,7 +6,7 @@
     "caption_prefix": null,
     "masking_prompt": null,
     "dataset_toml": "template/dataset_template_512_bs2.toml",
-    "eval_prompts": "template/eval_prompts_TOK.txt",
+    "eval_prompts": "template/grid_prompts_small.txt",
 
     "full_finetune": false,
     "sample_at_first": false,
