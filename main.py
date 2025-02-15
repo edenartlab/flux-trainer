@@ -22,7 +22,7 @@ def construct_train_command(config: Dict[str, Any]) -> List[str]:
         if float(config['learning_rate']) > 1.0e-4:
             print("WARNING: learning rate is higher than 1.0e-4, this is not recommended for full finetuning.")
             sys.exit(1)
-
+            
         cmd = [
             "accelerate", "launch",
             "--mixed_precision", "bf16",
