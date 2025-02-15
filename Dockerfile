@@ -27,12 +27,14 @@ RUN apt-get update && \
     git \
     wget \
     curl \
+    build-essential \
     libgl1-mesa-glx \
     libgstreamer1.0-0 \
     libgstreamer-plugins-base1.0-dev \
     libglib2.0-0 \
     python3 \
     python3-pip \
+    python3-dev \
     libmagic1 \
     zip \
     && rm -rf /var/lib/apt/lists/*
@@ -45,7 +47,7 @@ RUN git clone https://github.com/edenartlab/flux-trainer.git
 WORKDIR /app/flux-trainer
 
 # install dependencies
-RUN pip install timm==1.0.9 requests tqdm pymongo huggingface_hub python-dotenv boto3 python-magic openai toml
+RUN pip install timm==1.0.9 triton==3.1.0 bitsandbytes==0.44.0 requests==2.32.3 tqdm==4.67.1 pymongo==4.11.1 huggingface_hub==0.28.1 python-dotenv==1.0.1 boto3==1.36.21 python-magic==0.4.27 openai==1.61.0 toml==0.10.2
 RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 
 # clone and setup sd-scripts
@@ -54,9 +56,9 @@ RUN git clone https://github.com/kohya-ss/sd-scripts.git \
     && cd sd-scripts \
     && git checkout sd3 \
     ## new hash:
-    && git checkout e89653975ddf429cdf0c0fd268da0a5a3e8dba1f \
+    && git checkout ee295c7d9fb3dcd2a95be55cf0055ed398f02fd0 \
     ## old hash:
-    ## && git checkout 8bea039a8d9503a3fe696c445ca992301be1d6fd \ 
+    ## && git checkout e89653975ddf429cdf0c0fd268da0a5a3e8dba1f \ 
     && pip install --no-cache-dir -r requirements.txt \
     && cd ..
 
