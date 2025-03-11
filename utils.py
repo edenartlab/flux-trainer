@@ -195,6 +195,7 @@ def remove_vowels(text):
     return cleaned
 
 from eden_utils import describe_image_concept, gpt4_v_caption_dataset, florence_caption_dataset, clipseg_mask_generator, load_image_with_orientation, auto_detect_training_mode
+from augmentation import augment_dataset
 
 def prep_dataset(config, verbose = True):
     new_data_root_dir = os.path.join(config["output_dir"], "dataset")
@@ -206,6 +207,12 @@ def prep_dataset(config, verbose = True):
 
     # Cleanup and prep dataset:
     config = clean_imgs_and_txt_files(config["dataset_path"], new_data_dir, error_dir, config, config.get("caption_mode"))
+
+    # dataset augmentation:
+    print("Augmenting dataset...")
+    print(config["dataset_path"])
+    print(new_data_dir)
+    augment_dataset(config["dataset_path"])
 
     # Use GPT4v to check if the dataset is a face or style
     if not config.get("mode") or config.get("mode") == "auto":

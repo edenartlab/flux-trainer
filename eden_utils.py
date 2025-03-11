@@ -421,7 +421,6 @@ def create_thumbnail(
             except OSError:
                 pass
 
-
 def gpt4_v_caption_dataset(
     dataset_dir,               
     caption_mode="<GPT_CAPTION>",  
