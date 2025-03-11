@@ -47,7 +47,7 @@ RUN git clone https://github.com/edenartlab/flux-trainer.git
 WORKDIR /app/flux-trainer
 
 # install dependencies
-RUN pip install timm==1.0.9 triton==3.1.0 bitsandbytes==0.44.0 requests==2.32.3 tqdm==4.67.1 pymongo==4.11.1 huggingface_hub==0.28.1 python-dotenv==1.0.1 boto3==1.36.21 python-magic==0.4.27 openai==1.61.0 toml==0.10.2
+RUN pip install timm==1.0.9 triton==3.1.0 bitsandbytes==0.44.0 requests==2.32.3 tqdm==4.67.1 pymongo==4.11.1 mediapipe==0.10.21 huggingface_hub==0.28.1 python-dotenv==1.0.1 boto3==1.36.21 python-magic==0.4.27 openai==1.61.0 toml==0.10.2
 RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 
 # clone and setup sd-scripts

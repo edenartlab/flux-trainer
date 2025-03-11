@@ -212,7 +212,10 @@ def prep_dataset(config, verbose = True):
     print("Augmenting dataset...")
     print(config["dataset_path"])
     print(new_data_dir)
-    augment_dataset(config["dataset_path"])
+    augment_dataset(config["dataset_path"], 
+        n_augmentations_per_img=3,
+        mode = config["mode"],
+        enable_lr_flips=False)
 
     # Use GPT4v to check if the dataset is a face or style
     if not config.get("mode") or config.get("mode") == "auto":
