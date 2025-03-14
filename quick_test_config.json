@@ -1,0 +1,33 @@
+{
+  "dataset_path": "dataset_path",
+  "mode": "face",
+  "caption_mode": null,
+  "guidance_scale": "1.0",
+  "caption_prefix": "",
+  "masking_prompt": null,
+  "dataset_toml": "template/dataset_template_512_bs2.toml",
+  "eval_prompts": "template/grid_prompts_small.txt",
+  "custom_validation_prompts": null,
+  "full_finetune": false,
+  "sample_at_first": false,
+  "lora_rank": "8",
+  "learning_rate": "0.5e-4",
+  "max_train_steps": "10",
+  "save_every_n_steps": "5",
+  "sample_every_n_steps": "5",
+  "gradient_accumulation_steps": "1",
+  "noise_offset": "0.1",
+  "ip_noise_gamma": "0.1",
+  "seed": "772394376",
+  "MODEL_PATH": "models/flux-dev-de-distill-diffusers",
+  "CLIP_L_PATH": "models/clip_l.safetensors",
+  "T5XXL_PATH": "models/t5xxl_fp16.safetensors",
+  "AE_PATH": "models/ae.safetensors",
+  "lora_training_urls": [
+    "https://edenartlab-stage-data.s3-accelerate.amazonaws.com/cab12b589bc622e78847eb0e94465dfcb377b50ff786c6489ee460758f731f18.jpeg",
+    "https://edenartlab-stage-data.s3-accelerate.amazonaws.com/c8abb2a5416d8e8be612e3e570f6db5aac80f73b7bc113c0bd891b55e99863be.jpeg",
+    "https://edenartlab-stage-data.s3-accelerate.amazonaws.com/821c79b42638b21c0dd9d5a1d17403c58e01caa037f636f0b539fd4183dfb67f.jpeg",
+    "https://edenartlab-stage-data.s3-accelerate.amazonaws.com/8941c0ffdbd9f911724af65e09ccc353b362c05786085b0cf90d3fcd0338a95c.jpeg"
+  ],
+  "name": "quick-test-0314-2220"
+}

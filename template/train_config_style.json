@@ -6,7 +6,7 @@
     "masking_prompt": "",
     "dataset_toml": "template/dataset_template_512_bs2.toml",
     "eval_prompts": "template/eval_prompts_p.txt",
-
+    
     "full_finetune": false,
     "sample_at_first": false,
     "lora_rank": "12",

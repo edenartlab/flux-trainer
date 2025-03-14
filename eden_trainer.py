@@ -6,7 +6,7 @@ import sys
 import argparse
 import os
 from urllib.parse import urlparse
-
+import glob
 import eden_utils
 from main import *
 from bson import ObjectId
@@ -98,9 +98,10 @@ def main():
                 config_json[key] = value
             #####################################################
 
-        # Make sure we're sampling images just once at the end of training:
-        config_json["sample_every_n_steps"] = 2*config_json["max_train_steps"]
-        config_json["save_every_n_steps"] = config_json["max_train_steps"]
+        # Configure sampling and saving intervalsß
+        max_steps = int(config_json["max_train_steps"])
+        config_json["sample_every_n_steps"] = str(2 * max_steps)  # Sample once after training
+        config_json["save_every_n_steps"] = str(max_steps // 4)   # Save 4 checkpoints during training
 
         print(f"Final training arguments for job:")
         print(config_json)
@@ -141,11 +142,44 @@ def main():
             file_type=".safetensors",
             db=args.db
         )
-        print("Uploaded LoRA to Eden, file_url:", file_url)
+        print("Uploaded main LoRA checkpoint to Eden, file_url:", file_url)
 
         # Extract filenames from urls:
         thumbnail_filename = get_filename_from_url(thumbnail_url)
         lora_filename      = get_filename_from_url(file_url)
+
+        # Iterate over the 2 most recent checkpoints and upload them to Eden also:
+        checkpoint_versions_dict = {}
+        # Get all checkpoint files sorted by step number
+        checkpoint_pattern = f"{config['output_dir']}/{config['output_name']}-step*.safetensors"
+        all_checkpoint_paths = glob.glob(checkpoint_pattern)
+
+        # Sort checkpoints by step number (extract step number from filename)
+        def extract_step_number(path):
+            filename = os.path.basename(path)
+            step_str = filename.split('-step')[1].split('.')[0]
+            return int(step_str)
+
+        # Sort in descending order (newest first)
+        if all_checkpoint_paths:
+            all_checkpoint_paths.sort(key=extract_step_number, reverse=True)
+            
+            # Take only the 2 most recent checkpoints (skip the final one which is already uploaded)
+            recent_checkpoints = all_checkpoint_paths[:2]
+            
+            # Upload each checkpoint and add to versions dictionary
+            for i, checkpoint_path in enumerate(recent_checkpoints):
+                checkpoint_step = extract_step_number(checkpoint_path)
+                version_url, _ = eden_utils.upload_file(
+                    checkpoint_path,
+                    file_type=".safetensors",
+                    db=args.db
+                )
+                version_filename = get_filename_from_url(version_url)
+                checkpoint_versions_dict[f"step_{checkpoint_step}"] = version_filename
+                print(f"Uploaded checkpoint version-{checkpoint_step} to Eden, file_url: {version_url}")
+        else:
+            print("No checkpoint versions found with pattern:", checkpoint_pattern)
 
         # make slug
         # slug = eden_utils.make_slug(task)
@@ -155,6 +189,7 @@ def main():
         model_id = models_collection.insert_one({
             "args": task_args,
             "checkpoint": lora_filename,
+            "checkpoint_versions": checkpoint_versions_dict,
             "base_model": "flux-dev",
             "name": task_args["name"],
             "public": False,
