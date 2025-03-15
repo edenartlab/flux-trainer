@@ -56,7 +56,7 @@ RUN git clone https://github.com/kohya-ss/sd-scripts.git \
     && cd sd-scripts \
     && git checkout sd3 \
     ## new hash:
-    && git checkout ee295c7d9fb3dcd2a95be55cf0055ed398f02fd0 \
+    && git checkout 75933d70a15ac423f396c9d3df04d0d35fae6130 \
     ## old hash:
     ## && git checkout e89653975ddf429cdf0c0fd268da0a5a3e8dba1f \ 
     && pip install --no-cache-dir -r requirements.txt \
