@@ -24,5 +24,6 @@
     "MODEL_PATH": "models/flux-dev-de-distill-diffusers",
     "CLIP_L_PATH": "models/clip_l.safetensors",
     "T5XXL_PATH": "models/t5xxl_fp16.safetensors",
-    "AE_PATH": "models/ae.safetensors"
+    "AE_PATH": "models/ae.safetensors",
+    "TOKENIZER_PATH": "models"
 }

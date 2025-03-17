@@ -23,5 +23,6 @@
     "MODEL_PATH": "/data/xander/Projects/cog/GitHub_repos/flux-trainer/results/20250205_0641_big_01/20250205_0641_big_01-step00040000.safetensors",
     "CLIP_L_PATH": "models/clip_l.safetensors",
     "T5XXL_PATH": "models/t5xxl_fp16.safetensors",
-    "AE_PATH": "models/ae.safetensors"
+    "AE_PATH": "models/ae.safetensors",
+    "TOKENIZER_PATH": "models"
 }
