@@ -1,5 +1,5 @@
 results/
 xander/
-models/
+models/*safetensors
 __pycache__
 sd-scripts
