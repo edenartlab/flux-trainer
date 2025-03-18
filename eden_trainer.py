@@ -153,7 +153,7 @@ def upload_checkpoints(
     result["lora_filename"] = get_filename_from_url(file_url)
 
     # Upload checkpoint versions
-    checkpoint_versions_dict = {}
+    checkpoint_versions = []
     # Get all checkpoint files sorted by step number
     checkpoint_pattern = f"{config['output_dir']}/{config['output_name']}-step*.safetensors"
     all_checkpoint_paths = glob.glob(checkpoint_pattern)
@@ -169,7 +169,7 @@ def upload_checkpoints(
         all_checkpoint_paths.sort(key=extract_step_number, reverse=True)
         
         # Take only the 2 most recent checkpoints
-        recent_checkpoints = all_checkpoint_paths[:2]
+        recent_checkpoints = all_checkpoint_paths[:3]
         
         # Upload each checkpoint and add to versions dictionary
         for checkpoint_path in recent_checkpoints:
@@ -180,12 +180,12 @@ def upload_checkpoints(
                 db=db
             )
             version_filename = get_filename_from_url(version_url)
-            checkpoint_versions_dict[f"step_{checkpoint_step}"] = version_filename
+            checkpoint_versions.append({"step": checkpoint_step, "checkpoint": version_filename})
             print(f"Uploaded checkpoint version-{checkpoint_step} to Eden, file_url: {version_url}")
     else:
         print("No checkpoint versions found with pattern:", checkpoint_pattern)
     
-    result["checkpoint_versions"] = checkpoint_versions_dict
+    result["checkpoint_versions"] = checkpoint_versions
     return result
 
 def save_model_to_db(
