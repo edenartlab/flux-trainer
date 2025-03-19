@@ -227,7 +227,7 @@ def save_model_to_db(
         "lora_trigger_text": config["lora_trigger_text"],
         "lora_mode": config["mode"],
         "user": task["user"],
-        "requester": task["requester"],
+        "agent": task["agent"],
         "createdAt": datetime.now(timezone.utc),
         "updatedAt": datetime.now(timezone.utc),
     }
@@ -338,7 +338,7 @@ def run_training_workflow(
                 
             task = {
                 "user": "local_user",
-                "requester": "local_requester",
+                "agent": "local_agent",
                 "_id": "local_task_id"
             }
             
