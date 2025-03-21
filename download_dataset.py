@@ -46,6 +46,24 @@ def unzip_file(file_path: str, extract_to: str):
     except Exception as e:
         print(f"Error unzipping {file_path}: {e}")
 
+import shutil
+def check_disk_usage():
+    """Check total disk usage of the system"""
+    total, used, free = shutil.disk_usage("/")
+    
+    # Convert to GB
+    total_gb = total / (1024 ** 3)
+    used_gb = used / (1024 ** 3)
+    free_gb = free / (1024 ** 3)
+    
+    # Calculate percentage used
+    percent_used = (used / total) * 100
+    
+    print(f"Total disk space: {total_gb:.2f} GB")
+    print(f"Used disk space: {used_gb:.2f} GB")
+    print(f"Free disk space: {free_gb:.2f} GB")
+    print(f"Disk usage: {percent_used:.2f}%")
+
 def download_dataset(dataset_path: str, dataset_urls: List[str]):
     """
     Downloads and extracts datasets from the provided URLs.
@@ -53,6 +71,9 @@ def download_dataset(dataset_path: str, dataset_urls: List[str]):
     if os.path.exists(dataset_path):
         shutil.rmtree(dataset_path)
     os.makedirs(dataset_path, exist_ok=True)
+
+    print("Downloading dataset...")
+    check_disk_usage()
     
     for url in dataset_urls:
         local_file = download_file(url, dataset_path)

@@ -68,12 +68,10 @@ RUN HF_TOKEN=${HF_TOKEN} python3 download_models.py
 
 # Copy some smaller model files:
 RUN mkdir -p /app/flux-trainer/models/openai_clip-vit-large-patch14 \
-    /app/flux-trainer/models/google_t5-v1_1-xxl \
-    /app/flux-trainer/models/models--CIDAS--clipseg-rd64-refined
+    /app/flux-trainer/models/google_t5-v1_1-xxl
 
 COPY models/openai_clip-vit-large-patch14 /app/flux-trainer/models/openai_clip-vit-large-patch14
 COPY models/google_t5-v1_1-xxl /app/flux-trainer/models/google_t5-v1_1-xxl
-COPY models/models--CIDAS--clipseg-rd64-refined /app/flux-trainer/models/models--CIDAS--clipseg-rd64-refined
 
 # copy the rest of the files
 COPY . /app/flux-trainer/
