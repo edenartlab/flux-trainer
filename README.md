@@ -56,11 +56,13 @@ If you have all these models already downloaded somewhere else, you can just poi
 
 ## Building with docker:
 
-`docker build --build-arg HF_TOKEN=your_hf_token -t flux-trainer . `
+`HF_TOKEN=your_hf_token docker build --secret id=hf_token,env=HF_TOKEN -t flux-trainer . `
+
+The token is passed as a BuildKit secret, so it is not stored in the image. No other credentials are built in: the database, storage and captioning settings listed at the top of the `Dockerfile` must be provided as environment variables when the container or training job is started.
 
 or
 
-`docker build --no-cache --build-arg HF_TOKEN=your_hf_token -t flux-trainer . `
+`HF_TOKEN=your_hf_token docker build --no-cache --secret id=hf_token,env=HF_TOKEN -t flux-trainer . `
 
 
 and then run eg:
