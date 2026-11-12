@@ -8,7 +8,6 @@ import os
 import sys
 import tempfile
 import unittest
-from unittest import mock
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -19,26 +18,6 @@ def touch(path, content=b"x"):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "wb") as f:
         f.write(content)
-
-
-class LocalPathTest(unittest.TestCase):
-    def test_local_directories_are_used_as_is(self):
-        self.assertEqual(job_io.local_path("/data/job"), "/data/job")
-
-    def test_gs_url_maps_to_the_mounted_bucket(self):
-        with tempfile.TemporaryDirectory() as root:
-            os.makedirs(os.path.join(root, "my-bucket"))
-            with mock.patch.dict(os.environ, {"GCS_MOUNT_ROOT": root}):
-                self.assertEqual(
-                    job_io.local_path("gs://my-bucket/flux-trainer/abc/"),
-                    os.path.join(root, "my-bucket", "flux-trainer/abc"),
-                )
-
-    def test_unmounted_bucket_is_an_error(self):
-        with tempfile.TemporaryDirectory() as root:
-            with mock.patch.dict(os.environ, {"GCS_MOUNT_ROOT": root}):
-                with self.assertRaises(RuntimeError):
-                    job_io.local_path("gs://missing-bucket/job")
 
 
 class ArgsAndResultTest(unittest.TestCase):

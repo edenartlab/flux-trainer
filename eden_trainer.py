@@ -466,7 +466,7 @@ def run_job_dir(
     Returns:
         Process exit code: 0 on success, 1 on failure
     """
-    job_path = job_io.local_path(job_dir)
+    job_path = job_dir
 
     try:
         job = job_io.read_args(job_path)
@@ -500,7 +500,7 @@ def run_job_dir(
 def main():
     """Entry point for the script when run directly."""
     parser = argparse.ArgumentParser(description='Training script for flux network.')
-    parser.add_argument('--job_dir', help="Directory (gs://bucket/path or local) with args.json; results are written back to it and no database or storage credentials are used")
+    parser.add_argument('--job_dir', help="Directory with args.json; results are written back to it and no database or storage credentials are used")
     parser.add_argument('--task_id', help="Eden task ID")
     parser.add_argument('--db', type=str, default="STAGE", choices=["STAGE", "PROD"], help='Database')
     parser.add_argument('--config', type=str, default="template/train_config.json", help='Path to the training config file (JSON).')

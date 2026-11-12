@@ -7,10 +7,9 @@ everything it produces to, one directory:
     <job_dir>/result.json    output: {"status": "completed" | "failed", ...}
     <job_dir>/output/...     output: the LoRA, checkpoint versions, thumbnail
 
-The trainer therefore needs no database or storage credentials. On Vertex AI
-the directory is given as ``gs://bucket/path``; Vertex mounts every bucket the
-job's service account can use at ``/gcs/<bucket>``, so plain file operations
-are enough and no Cloud Storage client is needed.
+The trainer therefore needs no database or storage credentials. On Modal the
+directory is a folder on a Volume (see modal_app.py); the launcher reads the
+files from there, uploads them and registers the model.
 
 This module only uses the standard library so that it can be tested without the
 training dependencies.
@@ -30,22 +29,6 @@ OUTPUT_DIR = "output"
 MAX_CHECKPOINT_VERSIONS = 3
 
 
-def local_path(job_dir: str) -> str:
-    """Translate a job directory to a path on the local file system."""
-    if not job_dir.startswith("gs://"):
-        return job_dir
-
-    bucket, _, prefix = job_dir[len("gs://"):].partition("/")
-    mount_root = os.environ.get("GCS_MOUNT_ROOT", "/gcs")
-    bucket_path = os.path.join(mount_root, bucket)
-    if not bucket or not os.path.isdir(bucket_path):
-        raise RuntimeError(
-            f"Bucket '{bucket}' is not mounted at {bucket_path}. On Vertex AI this "
-            "means the job's service account cannot use the bucket."
-        )
-    return os.path.join(bucket_path, prefix.strip("/"))
-
-
 def read_args(job_path: str) -> Dict[str, Any]:
     """Return the contents of args.json: {"task_id": ..., "args": {...}}."""
     with open(os.path.join(job_path, ARGS_FILE), "r") as f:
@@ -56,12 +39,7 @@ def read_args(job_path: str) -> Dict[str, Any]:
 
 
 def write_result(job_path: str, result: Dict[str, Any]) -> str:
-    """Write result.json. It is written last, after the output files it names.
-
-    The file is written in place: on a mounted bucket a rename is a copy and a
-    delete, which gains nothing here because the launcher only reads the file
-    after the job has ended.
-    """
+    """Write result.json. It is written last, after the output files it names."""
     os.makedirs(job_path, exist_ok=True)
     path = os.path.join(job_path, RESULT_FILE)
     with open(path, "w") as f:
@@ -83,7 +61,9 @@ def export_outputs(
     """Copy the training outputs into <job_dir>/output and describe them.
 
     The returned dictionary is the body of result.json. File names in it are
-    relative to the job directory.
+    relative to the job directory. It carries what the trainer used to write to
+    the database itself: the final LoRA, the three most recent checkpoint
+    versions, the thumbnail, the trigger text, the mode and the full config.
     """
     output_dir = str(config["output_dir"])
     output_name = config["output_name"]
