@@ -56,14 +56,16 @@ def read_args(job_path: str) -> Dict[str, Any]:
 
 
 def write_result(job_path: str, result: Dict[str, Any]) -> str:
-    """Write result.json. It is written last, so its presence means the output
-    files it names are complete."""
+    """Write result.json. It is written last, after the output files it names.
+
+    The file is written in place: on a mounted bucket a rename is a copy and a
+    delete, which gains nothing here because the launcher only reads the file
+    after the job has ended.
+    """
     os.makedirs(job_path, exist_ok=True)
     path = os.path.join(job_path, RESULT_FILE)
-    tmp_path = os.path.join(job_path, f".{RESULT_FILE}.tmp")
-    with open(tmp_path, "w") as f:
+    with open(path, "w") as f:
         json.dump(result, f, indent=2, default=str)
-    os.replace(tmp_path, path)
     return path
 
 
