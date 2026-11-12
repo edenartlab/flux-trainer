@@ -1,25 +1,18 @@
+# syntax=docker/dockerfile:1
 # Use an official Python runtime as a parent image
 FROM nvidia/cuda:11.8.0-runtime-ubuntu22.04
 ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-# env vars
-ARG HF_TOKEN \
-    MONGO_URI MONGO_DB_NAME_STAGE MONGO_DB_NAME_PROD \
-    AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_REGION_NAME \
-    AWS_BUCKET_NAME_STAGE AWS_BUCKET_NAME_PROD \
-    OPENAI_API_KEY
-ENV HF_TOKEN=${HF_TOKEN} \
-    MONGO_URI=${MONGO_URI} \
-    MONGO_DB_NAME_STAGE=${MONGO_DB_NAME_STAGE} \
-    MONGO_DB_NAME_PROD=${MONGO_DB_NAME_PROD} \
-    AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
-    AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
-    AWS_REGION_NAME=${AWS_REGION_NAME} \
-    AWS_BUCKET_NAME_STAGE=${AWS_BUCKET_NAME_STAGE} \
-    AWS_BUCKET_NAME_PROD=${AWS_BUCKET_NAME_PROD} \
-    OPENAI_API_KEY=${OPENAI_API_KEY}
+# No credentials are built into this image. Build arguments and ENV values are
+# recorded in the image layers and can be read by anyone who can pull it.
+#   - The Hugging Face token needed to download models at build time is passed
+#     as a BuildKit secret (see README) and is not stored in any layer.
+#   - Runtime configuration (MONGO_URI, MONGO_DB_NAME_STAGE/PROD,
+#     AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION_NAME,
+#     AWS_BUCKET_NAME_STAGE/PROD, OPENAI_API_KEY) must be supplied as
+#     environment variables by whatever launches the training job.
 
 # install deps
 RUN apt-get update && \
@@ -64,7 +57,8 @@ RUN git clone https://github.com/kohya-ss/sd-scripts.git \
 
 # copy download script and download models from huggingface
 COPY download_models.py /app/flux-trainer/
-RUN HF_TOKEN=${HF_TOKEN} python3 download_models.py
+RUN --mount=type=secret,id=hf_token \
+    HF_TOKEN="$(cat /run/secrets/hf_token)" python3 download_models.py
 
 # Copy some smaller model files:
 RUN mkdir -p /app/flux-trainer/models/openai_clip-vit-large-patch14 \
