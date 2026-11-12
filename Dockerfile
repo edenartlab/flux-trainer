@@ -5,14 +5,15 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-# No credentials are built into this image. Build arguments and ENV values are
-# recorded in the image layers and can be read by anyone who can pull it.
-#   - The Hugging Face token needed to download models at build time is passed
-#     as a BuildKit secret (see README) and is not stored in any layer.
-#   - Runtime configuration (MONGO_URI, MONGO_DB_NAME_STAGE/PROD,
-#     AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION_NAME,
-#     AWS_BUCKET_NAME_STAGE/PROD, OPENAI_API_KEY) must be supplied as
-#     environment variables by whatever launches the training job.
+# No credentials are built into this image, and none are needed to build it:
+# every model it downloads is public. Build arguments and ENV values are
+# recorded in the image layers and can be read by anyone who can pull it, so do
+# not add any.
+#
+# At run time the trainer is started with --job_dir (see job_io.py). It reads
+# its arguments from that directory and writes its results back to it, so it
+# needs no database or storage credentials. The only setting the launcher
+# passes is OPENAI_API_KEY, as a per-job environment variable.
 
 # install deps
 RUN apt-get update && \
@@ -35,13 +36,15 @@ RUN apt-get update && \
 # Set python3 as the default python
 RUN ln -s /usr/bin/python3 /usr/bin/python
 
-# clone the repository and set the working directory to flux-trainer
-RUN git clone https://github.com/edenartlab/flux-trainer.git
+# The trainer's code comes from the build context (COPY below), never from a
+# network clone, so the image contains exactly the reviewed commit.
 WORKDIR /app/flux-trainer
 
 # install dependencies
 RUN pip install timm==1.0.9 triton==3.1.0 bitsandbytes==0.44.0 requests==2.32.3 tqdm==4.67.1 pymongo==4.11.1 mediapipe==0.10.21 huggingface_hub==0.28.1 python-dotenv==1.0.1 boto3==1.36.21 python-magic==0.4.27 openai==1.61.0 toml==0.10.2
-RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+# Pinned to the release that was current when the last working image was built
+# (March 2025); an unpinned install now resolves to a newer, untested version.
+RUN pip install torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/cu118
 
 # clone and setup sd-scripts
 # this will install specific versions of many dependencies (einops, transformers, accelerate, ...)
@@ -56,16 +59,9 @@ RUN git clone https://github.com/kohya-ss/sd-scripts.git \
     && cd ..
 
 # copy download script and download models from huggingface
-COPY download_models.py /app/flux-trainer/
-RUN --mount=type=secret,id=hf_token \
-    HF_TOKEN="$(cat /run/secrets/hf_token)" python3 download_models.py
-
-# Copy some smaller model files:
-RUN mkdir -p /app/flux-trainer/models/openai_clip-vit-large-patch14 \
-    /app/flux-trainer/models/google_t5-v1_1-xxl
-
-COPY models/openai_clip-vit-large-patch14 /app/flux-trainer/models/openai_clip-vit-large-patch14
-COPY models/google_t5-v1_1-xxl /app/flux-trainer/models/google_t5-v1_1-xxl
+# (FLUX weights, text encoders, tokenizers, Florence-2 and CLIPSeg; all public)
+COPY download_models.py eden_utils.py /app/flux-trainer/
+RUN python3 download_models.py
 
 # copy the rest of the files
 COPY . /app/flux-trainer/
