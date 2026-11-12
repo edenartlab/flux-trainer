@@ -44,14 +44,34 @@ AWS_BUCKET_NAME_STAGE = os.getenv("AWS_BUCKET_NAME_STAGE")
 AWS_BUCKET_NAME_PROD = os.getenv("AWS_BUCKET_NAME_PROD")
 
 
-client = MongoClient(MONGO_URI)
+# The database and storage clients are created on first use. A job started with
+# --job_dir (see eden_trainer.py) has no database or storage credentials and
+# never calls them.
+_mongo_client = None
+_s3_client = None
 
-s3 = boto3.client(
-    's3', 
-    aws_access_key_id=AWS_ACCESS_KEY_ID,
-    aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-    region_name=AWS_REGION_NAME
-)
+
+def get_mongo_client():
+    global _mongo_client
+    if _mongo_client is None:
+        if not MONGO_URI:
+            raise RuntimeError("MONGO_URI is not set")
+        _mongo_client = MongoClient(MONGO_URI)
+    return _mongo_client
+
+
+def get_s3_client():
+    global _s3_client
+    if _s3_client is None:
+        if not (AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY):
+            raise RuntimeError("AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY are not set")
+        _s3_client = boto3.client(
+            's3',
+            aws_access_key_id=AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+            region_name=AWS_REGION_NAME
+        )
+    return _s3_client
 
 s3_buckets = {
     "STAGE": AWS_BUCKET_NAME_STAGE,
@@ -74,6 +94,7 @@ file_extensions = {
 
 
 def get_collection(collection_name, db):
+    client = get_mongo_client()
     db = client[MONGO_DB_NAME_PROD] if db == "PROD" else client[MONGO_DB_NAME_STAGE]
     return db[collection_name]
 
@@ -188,7 +209,7 @@ def upload_buffer(buffer, name=None, file_type=None, db="STAGE"):
     
     bucket_name = s3_buckets[db]
 
-    s3.upload_fileobj(
+    get_s3_client().upload_fileobj(
         file_bytes, 
         bucket_name, 
         filename, 

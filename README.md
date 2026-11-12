@@ -56,17 +56,24 @@ If you have all these models already downloaded somewhere else, you can just poi
 
 ## Building with docker:
 
-`HF_TOKEN=your_hf_token docker build --secret id=hf_token,env=HF_TOKEN -t flux-trainer . `
+`docker build -t flux-trainer .`
 
-The token is passed as a BuildKit secret, so it is not stored in the image. No other credentials are built in: the database, storage and captioning settings listed at the top of the `Dockerfile` must be provided as environment variables when the container or training job is started.
+No credentials are needed to build the image and none are stored in it: every model it downloads is public. The image is about 50 GB, so build it on a machine with at least 150 GB of free disk. To build it with Google Cloud Build and push it to Artifact Registry, see `cloudbuild.yaml`.
 
-or
+## Running as a job (no database or storage credentials):
 
-`HF_TOKEN=your_hf_token docker build --no-cache --secret id=hf_token,env=HF_TOKEN -t flux-trainer . `
+The container is started with one argument, a job directory:
 
+`python3 eden_trainer.py --job_dir gs://<bucket>/<path>` (or a local directory)
 
-and then run eg:
-`docker run -it flux-trainer`
+- `<job_dir>/args.json` is read at start: `{"task_id": "...", "args": {"name": ..., "lora_training_urls": [...], ...}}`
+- `<job_dir>/output/` receives the LoRA, up to three checkpoint versions and a thumbnail
+- `<job_dir>/result.json` is written last: `{"status": "completed", "lora": "output/...", "checkpoint_versions": [...], "thumbnail": "output/...", "lora_trigger_text": ..., "lora_mode": ...}` or `{"status": "failed", "error": "..."}`. The process exits with a non-zero code on failure.
 
-or get a shell inside the container:
-`docker run -it flux-trainer /bin/bash`
+On Vertex AI the bucket is available as a mounted directory (`/gcs/<bucket>`) using the job's own service account, so the trainer needs no keys for it. The only setting the launcher passes is `OPENAI_API_KEY` (used to detect the training mode and describe the concept), as an environment variable of that one job. The launcher registers the model from `result.json`; the trainer does not write to any database. See `job_io.py`.
+
+Add `--local_test` for a 10-step run that exercises the whole path cheaply.
+
+Tests for the job hand-off: `python -m unittest discover -s tests`
+
+The older `--task_id` / `--db` mode, in which the trainer itself reads and writes the database and the media bucket, still exists but needs `MONGO_URI`, `MONGO_DB_NAME_*`, `AWS_*` and `AWS_BUCKET_NAME_*` in the environment. It is not used by the hosted service any more.

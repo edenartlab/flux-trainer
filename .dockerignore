@@ -1,5 +1,9 @@
+.git
+.env
 results/
 xander/
-models/*safetensors
+models/
+datasets/
+tests/
 __pycache__
 sd-scripts
