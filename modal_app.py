@@ -142,6 +142,8 @@ def download_models() -> dict:
     timeout=MAX_RUN_SECONDS,
     retries=0,
     max_containers=2,
+    # Nothing waits around: a container that has no run goes away at once.
+    scaledown_window=5,
     # One run per container, like one Vertex job per training: no state is
     # carried from one user's training to the next.
     single_use_containers=True,
