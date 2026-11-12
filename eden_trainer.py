@@ -8,6 +8,7 @@ import os
 from urllib.parse import urlparse
 import glob
 import eden_utils
+import job_io
 from main import *
 from bson import ObjectId
 from eden_utils import get_collection
@@ -450,15 +451,65 @@ def run_training_workflow(
     
     return results
 
+def run_job_dir(
+    job_dir: str,
+    config_path: str = "template/train_config.json",
+    local_test: bool = False
+) -> int:
+    """
+    Train from a job directory, with no database or storage credentials.
+
+    Reads <job_dir>/args.json, trains, copies the results to <job_dir>/output and
+    writes <job_dir>/result.json (see job_io.py). Whatever launched the job is
+    responsible for registering the model.
+
+    Returns:
+        Process exit code: 0 on success, 1 on failure
+    """
+    job_path = job_dir
+
+    try:
+        job = job_io.read_args(job_path)
+        print(f"Running job {job.get('task_id')} from {job_dir}")
+
+        results = run_training_workflow(
+            task_id=None,
+            task_args=job["args"],
+            config_path=config_path,
+            local_test=local_test,
+            skip_db_updates=True
+        )
+        if results.get("status") != "success":
+            raise RuntimeError(results.get("error") or "Training failed")
+
+        result = job_io.export_outputs(job_path, results["config"], thumbnail_path="EDEN.jpg")
+        result["task_id"] = job.get("task_id")
+        result["run_time"] = results.get("run_time")
+        job_io.write_result(job_path, result)
+        print(f"Wrote results to {job_dir}")
+        return 0
+
+    except Exception as e:
+        logging.error(f"Job failed: {e}")
+        try:
+            job_io.write_result(job_path, {"status": "failed", "error": str(e)})
+        except Exception as write_error:
+            logging.error(f"Could not write the failure to {job_dir}: {write_error}")
+        return 1
+
 def main():
     """Entry point for the script when run directly."""
     parser = argparse.ArgumentParser(description='Training script for flux network.')
+    parser.add_argument('--job_dir', help="Directory with args.json; results are written back to it and no database or storage credentials are used")
     parser.add_argument('--task_id', help="Eden task ID")
     parser.add_argument('--db', type=str, default="STAGE", choices=["STAGE", "PROD"], help='Database')
     parser.add_argument('--config', type=str, default="template/train_config.json", help='Path to the training config file (JSON).')
     parser.add_argument('--local_test', action='store_true', help='Run locally for testing')
     args = parser.parse_args()
-    
+
+    if args.job_dir:
+        sys.exit(run_job_dir(args.job_dir, config_path=args.config, local_test=args.local_test))
+
     run_training_workflow(
         task_id=args.task_id,
         db=args.db,
